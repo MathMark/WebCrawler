@@ -25,6 +25,7 @@ import java.util.Map;
 @Slf4j
 public class CrawlInitializer {
 
+    private final String id;
     private final Website website;
     private final Set<String> synchronizedUrls;
     private final Map<String, Runnable> threads = new ConcurrentHashMap<>();
@@ -32,25 +33,34 @@ public class CrawlInitializer {
 
 
     public CrawlInitializer(Website website, CountDownLatch countDownLatch) {
+        this.id = UUID.randomUUID().toString();
         this.countDownLatch = countDownLatch;
         this.website = website;
         this.synchronizedUrls = Collections.synchronizedSet(new HashSet<>());
     }
 
-    public void crawl(int threadCount) throws IOException {
-        scanLinks(this.website.getUrl(), website);
-        List<PageLink> startLinks = website.getInternalLinks().stream().limit(threadCount).toList();
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-        log.info("Starting crawling website {} with {} threads", website.getDomain(), threadCount);
-        for (PageLink startLink : startLinks) {
-            Runnable thread = new AsyncWebCrawler(startLink.getHref(), this.website, this.synchronizedUrls, countDownLatch);
-            String id = UUID.randomUUID().toString();
-            threads.put(id, thread);
-            executorService.execute(thread);
+    public void crawl(int threadCount) {
+        try {
+            scanLinks(this.website.getUrl(), website);
+            List<PageLink> startLinks = website.getInternalLinks().stream().limit(threadCount).toList();
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            log.info("Starting crawling website {} with {} threads", website.getDomain(), threadCount);
+            for (PageLink startLink : startLinks) {
+                Runnable thread = new AsyncWebCrawler(startLink.getHref(), this.website, this.synchronizedUrls, countDownLatch);
+                String id = UUID.randomUUID().toString();
+                threads.put(id, thread);
+                executorService.execute(thread);
+            }
+        } catch (IOException e) {
+            log.warn("");
         }
     }
 
-    public synchronized int getFoundPagesCount() {
+    public synchronized String getId() {
+        return id;
+    }
+    
+    public int getFoundPagesCount() {
         return this.website.getInternalLinks().size();
     }
 
