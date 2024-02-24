@@ -35,9 +35,9 @@ public class CrawlController {
     }
     
     @GetMapping("/stop")
-    public ResponseEntity<String> stopCrawl(@RequestParam String taskId) {
-        crawlerService.stopCrawling(taskId);
-        return ResponseEntity.ok("Success");
+    public ResponseEntity<CrawlStatus> stopCrawl(@RequestParam String taskId) {
+        CrawlStatus crawlStatus = crawlerService.stopCrawling(taskId);
+        return ResponseEntity.ok(crawlStatus);
     }
 
     /** TODO: add the following endpoints:

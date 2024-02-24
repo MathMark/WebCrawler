@@ -40,17 +40,24 @@ public class CrawlerService {
         }
         CrawlStatus crawlStatus = new CrawlStatus();
         crawlStatus.setCrawledPages(webCrawler.getCrawledPagesCount());
-        crawlStatus.setFoundPage(webCrawler.getFoundPagesCount());
+        crawlStatus.setRemainedPages(webCrawler.getRemainedPagesCount());
+        crawlStatus.setBrokenPagesCount(webCrawler.getBrokenLinksCount());
         crawlStatus.setStatus(webCrawler.getStatus());
         return crawlStatus;
     }
     
-    public void stopCrawling(String taskId) {
+    public CrawlStatus stopCrawling(String taskId) {
         WebCrawler webCrawler = processes.get(taskId);
         if (webCrawler == null) {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
         }
         webCrawler.shutDown();
+        return CrawlStatus.builder()
+                .crawledPages(webCrawler.getCrawledPagesCount())
+                .remainedPages(webCrawler.getRemainedPagesCount())
+                .brokenPagesCount(webCrawler.getBrokenLinksCount())
+                .status(webCrawler.getStatus())
+                .build();
     }
     
     private String cutDomain(String url) {
