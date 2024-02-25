@@ -6,4 +6,6 @@ public interface CompletableRunnable extends Runnable {
      * to clear resources finish its work gracefully.
      */
     void stop();
+    void addThreadCompleteListener(ThreadCompleteListener listener);
+    void removeThreadCompleteListener(ThreadCompleteListener listener);
 }

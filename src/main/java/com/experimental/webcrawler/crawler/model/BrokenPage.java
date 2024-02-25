@@ -1,4 +1,4 @@
-package com.experimental.webcrawler.model;
+package com.experimental.webcrawler.crawler.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,8 +10,6 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class BrokenPage {
-    private String initialUrl;
-    private String brokerUrl;
-    private String href;
+    private Page page;
     private int statusCode;
 }

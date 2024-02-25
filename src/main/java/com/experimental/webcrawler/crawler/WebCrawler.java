@@ -1,12 +1,14 @@
 package com.experimental.webcrawler.crawler;
 
-import com.experimental.webcrawler.model.PageLink;
-import com.experimental.webcrawler.model.Website;
+import com.experimental.webcrawler.crawler.model.Page;
+import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.parser.WebParser;
+import com.experimental.webcrawler.service.CrawlCompleteListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -23,15 +25,24 @@ import java.util.stream.Collectors;
 public class WebCrawler implements ThreadCompleteListener {
 
     private final Website website;
-    private final Set<String> scannedPages;
+    private final Set<Page> scannedPages;
     private final Map<String, CompletableRunnable> threads = new ConcurrentHashMap<>();
     private ExecutorService executorService;
     private Status status;
     private final WebParser parser = new WebParser();
+    private final List<CrawlCompleteListener> listeners = new ArrayList<>();
 
     public WebCrawler(Website website) {
         this.website = website;
         this.scannedPages = Collections.synchronizedSet(new HashSet<>());
+    }
+    
+    public void addListener(CrawlCompleteListener listener) {
+        listeners.add(listener);
+    }
+    
+    public void removeListener(CrawlCompleteListener listener) {
+        listeners.remove(listener);
     }
 
     public int getRemainedPagesCount() {
@@ -51,8 +62,10 @@ public class WebCrawler implements ThreadCompleteListener {
     }
     
     public void crawl(int threadCount) {
-        parser.parseLinks(this.website.getUrl(), website);
-        List<PageLink> startLinks = website.getInternalLinks().stream()
+        Page pageToCrawl = new Page();
+        pageToCrawl.setCurrentUrl(this.website.getUrl());
+        parser.parseLinks(pageToCrawl, website);
+        List<Page> startLinks = website.getInternalLinks().stream()
                 .limit(threadCount)
                 .collect(Collectors.toList());
         if (startLinks.isEmpty()) {
@@ -65,12 +78,13 @@ public class WebCrawler implements ThreadCompleteListener {
         executorService = Executors.newFixedThreadPool(threadCount);
         log.info("Starting crawling website {} with {} threads", website.getDomain(), threadCount);
 
-        for (PageLink startLink : startLinks) {
+        for (Page startLink : startLinks) {
             String id = UUID.randomUUID().toString();
-            CompletableRunnable thread = new CrawlingThread(id, startLink.getHref(), 
+            CompletableRunnable thread = new CrawlingThread(id, startLink, 
                     this.website, 
                     this.scannedPages, 
-                    this, parser);
+                     parser);
+            thread.addThreadCompleteListener(this);
             threads.put(id, thread);
             executorService.execute(thread);
         }
@@ -85,7 +99,7 @@ public class WebCrawler implements ThreadCompleteListener {
     }
 
     @Override
-    public void notifyOnThreadComplete(final String threadId) {
+    public void onThreadComplete(final String threadId) {
         threads.remove(threadId);
         log.info("Thread {} exited.", threadId);
         if (threads.isEmpty()) {
@@ -93,6 +107,13 @@ public class WebCrawler implements ThreadCompleteListener {
             if (executorService != null && !executorService.isShutdown()) {
                 executorService.shutdown();
             }
+            notifyListeners();
+        }
+    }
+    
+    private void notifyListeners() {
+        for (CrawlCompleteListener listener : listeners) {
+            listener.onCrawlCompete(website);
         }
     }
 
@@ -100,24 +121,39 @@ public class WebCrawler implements ThreadCompleteListener {
     public static class CrawlingThread implements CompletableRunnable {
 
         private final String id;
-        private final String startUrl;
+        private final Page startPage;
         private final Website website;
-        private final Set<String> scannedPages;
+        private final Set<Page> scannedPages;
         private final AtomicBoolean isRequestedToStop = new AtomicBoolean();
-        private final ThreadCompleteListener listener;
+        private final List<ThreadCompleteListener> listeners = new ArrayList<>();
         private final WebParser parser;
 
-
-        public void scan(String url) throws IOException {
-            if (!scannedPages.contains(url)) {
-                scannedPages.add(url);
-                log.info("Scanning internal page {}", url);
-                parser.parseLinks(url, website);
+        public void scan(Page page) throws IOException {
+            if (!scannedPages.contains(page)) {
+                scannedPages.add(page);
+                log.info("Scanning internal page {}", page.getCurrentUrl());
+                parser.parseLinks(page, website);
             }
         }
 
         public synchronized void stop() {
             isRequestedToStop.set(true);
+        }
+
+        @Override
+        public void addThreadCompleteListener(ThreadCompleteListener listener) {
+            listeners.add(listener);
+        }
+
+        @Override
+        public void removeThreadCompleteListener(ThreadCompleteListener listener) {
+            listeners.remove(listener);
+        }
+        
+        private void notifyListeners() {
+            for (ThreadCompleteListener listener : listeners) {
+                listener.onThreadComplete(this.id);
+            }
         }
 
         private boolean isStopped() {
@@ -130,11 +166,11 @@ public class WebCrawler implements ThreadCompleteListener {
         public void run() {
             isRequestedToStop.set(false);
             try {
-                scan(this.startUrl);
+                scan(this.startPage);
                 while (!isStopped()) {
-                    scan(this.website.getInternalLinks().poll().getHref());
+                    scan(this.website.getInternalLinks().poll());
                 }
-                listener.notifyOnThreadComplete(this.id);
+                notifyListeners();
             } catch (IOException e) {
                 log.warn(e.getMessage(), e);
             }

@@ -4,7 +4,12 @@ import com.experimental.webcrawler.crawler.WebCrawler;
 import com.experimental.webcrawler.dto.CrawlResponse;
 import com.experimental.webcrawler.dto.CrawlStatus;
 import com.experimental.webcrawler.exception.TaskNotFoundException;
-import com.experimental.webcrawler.model.Website;
+import com.experimental.webcrawler.crawler.model.Website;
+import com.experimental.webcrawler.mapper.WebMapper;
+import com.experimental.webcrawler.model.WebsiteReport;
+import com.experimental.webcrawler.repository.WebsiteReportRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -14,7 +19,11 @@ import java.util.regex.Pattern;
 import java.util.Map;
 
 @Service
-public class CrawlerService {
+@RequiredArgsConstructor
+@Slf4j
+public class CrawlerService implements CrawlCompleteListener {
+    
+    private final WebsiteReportRepository websiteReportRepository;
     
     private static final Pattern pattern = Pattern.compile("^(https?://[^/]+)");
     private final Map<String, WebCrawler> processes = new HashMap<>();
@@ -23,6 +32,7 @@ public class CrawlerService {
         String domain = cutDomain(url);
         Website website = new Website(url, domain);
         WebCrawler webCrawler = new WebCrawler(website);
+        webCrawler.addListener(this);
         webCrawler.crawl(threadCount);
         String taskId = UUID.randomUUID().toString();
         processes.put(taskId, webCrawler);
@@ -66,5 +76,12 @@ public class CrawlerService {
             return matcher.group();
         }
         return "";
+    }
+
+    @Override
+    public void onCrawlCompete(Website website) {
+        WebsiteReport websiteReport = WebMapper.mapToWebSiteReport(website);
+        websiteReportRepository.save(websiteReport);
+        log.info("Report for website {} has been successfully saved.", website.getDomain());
     }
 }

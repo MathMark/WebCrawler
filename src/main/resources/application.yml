@@ -1,3 +1,9 @@
 server:
   port:
     8294
+spring:
+  application:
+    name: webcrawler
+  data:
+    mongodb:
+      uri: "mongodb://localhost:27017/websites"

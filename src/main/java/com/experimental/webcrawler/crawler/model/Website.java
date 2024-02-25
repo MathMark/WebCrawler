@@ -1,4 +1,4 @@
-package com.experimental.webcrawler.model;
+package com.experimental.webcrawler.crawler.model;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,8 +15,8 @@ public class Website {
     private final String url;
     private final String domain;
     
-    private final BlockingQueue<PageLink> internalLinks = new LinkedBlockingDeque<>();
-    private final Set<PageLink> externalLinks = new HashSet<>();
+    private final BlockingQueue<Page> internalLinks = new LinkedBlockingDeque<>();
+    private final Set<Page> externalLinks = new HashSet<>();
     private final List<BrokenPage> brokenPages = Collections.synchronizedList(new ArrayList<>());
     
     private final Object externalLinkMonitor = new Object();
@@ -29,7 +29,7 @@ public class Website {
         }
     }
 
-    public BlockingQueue<PageLink> getInternalLinks() {
+    public BlockingQueue<Page> getInternalLinks() {
         return internalLinks;
     }
     
@@ -37,7 +37,7 @@ public class Website {
         return brokenPages;
     }
 
-    public Set<PageLink> getExternalLinks() {
+    public Set<Page> getExternalLinks() {
         synchronized (externalLinkMonitor) {
             return externalLinks;
         }
