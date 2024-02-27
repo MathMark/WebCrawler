@@ -4,24 +4,32 @@ import com.experimental.webcrawler.crawler.model.BrokenPage;
 import com.experimental.webcrawler.crawler.model.Page;
 import com.experimental.webcrawler.crawler.model.Website;
 import lombok.extern.slf4j.Slf4j;
-import org.jsoup.Connection;
-import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
-import org.jsoup.UnsupportedMimeTypeException;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class WebParser {
-    
+
+    private final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
+
     public void parseLinks(Page pageToParse, Website website) {
-        try {
-            Connection.Response response = Jsoup.connect(pageToParse.getCurrentUrl()).timeout(3000).execute();
-            Document doc = response.parse();
+
+        String htmlBody = getHtmlSource(pageToParse, website);
+        if (htmlBody != null && !htmlBody.isEmpty()) {
+            Document doc = Jsoup.parse(htmlBody);
             Elements links = doc.select("a[href]");
             for (Element link : links) {
                 Page page = new Page();
@@ -34,24 +42,50 @@ public class WebParser {
                     website.getExternalLinks().add(page);
                 }
             }
-        } catch (UnsupportedMimeTypeException ignored) {
-        } catch (HttpStatusException e) {
-            int statusCode = e.getStatusCode();
-            log.warn("Couldn't read content from page {}. Status code is: {}", pageToParse.getCurrentUrl(), statusCode);
-            if (isBroken(statusCode)) {
-                BrokenPage brokenPage = new BrokenPage();
-                brokenPage.setPage(pageToParse);
-                brokenPage.setStatusCode(statusCode);
+        }
+
+    }
+
+    private String getHtmlSource(Page page, Website website) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI(page.getCurrentUrl()))
+                    .GET()
+                    .build();
+            HttpResponse<String> httpResponse = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (!isHtml(httpResponse)) {
+                return null;
+            }
+            if (isBroken(httpResponse.statusCode())) {
+                BrokenPage brokenPage = BrokenPage.builder()
+                        .page(page).statusCode(httpResponse.statusCode()).build();
                 website.getBrokenPages().add(brokenPage);
             }
+            return httpResponse.body();
+        } catch (URISyntaxException e) {
+            log.warn("Incorrect URI syntax {}", page.getCurrentUrl());
+        } catch (InterruptedException e) {
+            log.warn("HttpRequest was interrupted.");
+            Thread.currentThread().interrupt();
         } catch (IOException e) {
-            log.warn("Exception while trying to scan page {}.", pageToParse.getCurrentUrl(), e);
+            e.printStackTrace();
         }
+        return null;
     }
 
     private boolean isBroken(int statusCode) {
         return statusCode == HttpStatus.NOT_FOUND.value() ||
                 statusCode == HttpStatus.GONE.value() ||
                 statusCode == HttpStatus.FORBIDDEN.value();
+    }
+    
+    private boolean isHtml(HttpResponse<String> response) {
+        Map<String, List<String>> headers = response.headers().map();
+        List<String> contentTypeList = headers.get("content-type");
+        if (!contentTypeList.isEmpty()) {
+            List<String> htmlContentTypes = contentTypeList.stream().filter(ct -> ct.contains("text/html")).collect(Collectors.toList());
+            return !htmlContentTypes.isEmpty();
+        }
+        return false;
     }
 }

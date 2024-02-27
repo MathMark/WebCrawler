@@ -41,7 +41,7 @@ public class CrawlController {
     }
 
     /** TODO: add the following endpoints:
-     * stop crawling
+     * pause crawling
      * get reports
      */
 }

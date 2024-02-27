@@ -14,7 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @Document(value = "websiteReport")
-public class WebsiteReport {
+public class WebsiteProject {
     @Id
     private String id;
     private String url;

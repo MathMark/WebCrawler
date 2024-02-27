@@ -6,7 +6,7 @@ import com.experimental.webcrawler.dto.CrawlStatus;
 import com.experimental.webcrawler.exception.TaskNotFoundException;
 import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.mapper.WebMapper;
-import com.experimental.webcrawler.model.WebsiteReport;
+import com.experimental.webcrawler.model.WebsiteProject;
 import com.experimental.webcrawler.repository.WebsiteReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import java.util.Map;
 @Slf4j
 public class CrawlerService implements CrawlCompleteListener {
     
-    private final WebsiteReportRepository websiteReportRepository;
+    private final WebsiteReportRepository websiteProjectRepository;
     
     private static final Pattern pattern = Pattern.compile("^(https?://[^/]+)");
     private final Map<String, WebCrawler> processes = new HashMap<>();
@@ -80,8 +80,8 @@ public class CrawlerService implements CrawlCompleteListener {
 
     @Override
     public void onCrawlCompete(Website website) {
-        WebsiteReport websiteReport = WebMapper.mapToWebSiteReport(website);
-        websiteReportRepository.save(websiteReport);
+        WebsiteProject websiteProject = WebMapper.mapToWebSiteReport(website);
+        websiteProjectRepository.save(websiteProject);
         log.info("Report for website {} has been successfully saved.", website.getDomain());
     }
 }

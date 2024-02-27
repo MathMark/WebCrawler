@@ -7,7 +7,6 @@ import com.experimental.webcrawler.service.CrawlCompleteListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,11 +35,11 @@ public class WebCrawler implements ThreadCompleteListener {
         this.website = website;
         this.scannedPages = Collections.synchronizedSet(new HashSet<>());
     }
-    
+
     public void addListener(CrawlCompleteListener listener) {
         listeners.add(listener);
     }
-    
+
     public void removeListener(CrawlCompleteListener listener) {
         listeners.remove(listener);
     }
@@ -56,11 +55,11 @@ public class WebCrawler implements ThreadCompleteListener {
     public Status getStatus() {
         return this.status;
     }
-    
+
     public int getBrokenLinksCount() {
         return this.website.getBrokenPages().size();
     }
-    
+
     public void crawl(int threadCount) {
         Page pageToCrawl = new Page();
         pageToCrawl.setCurrentUrl(this.website.getUrl());
@@ -80,10 +79,10 @@ public class WebCrawler implements ThreadCompleteListener {
 
         for (Page startLink : startLinks) {
             String id = UUID.randomUUID().toString();
-            CompletableRunnable thread = new CrawlingThread(id, startLink, 
-                    this.website, 
-                    this.scannedPages, 
-                     parser);
+            CompletableRunnable thread = new CrawlingThread(id, startLink,
+                    this.website,
+                    this.scannedPages,
+                    parser);
             thread.addThreadCompleteListener(this);
             threads.put(id, thread);
             executorService.execute(thread);
@@ -110,7 +109,7 @@ public class WebCrawler implements ThreadCompleteListener {
             notifyListeners();
         }
     }
-    
+
     private void notifyListeners() {
         for (CrawlCompleteListener listener : listeners) {
             listener.onCrawlCompete(website);
@@ -128,7 +127,7 @@ public class WebCrawler implements ThreadCompleteListener {
         private final List<ThreadCompleteListener> listeners = new ArrayList<>();
         private final WebParser parser;
 
-        public void scan(Page page) throws IOException {
+        public void scan(Page page) {
             if (!scannedPages.contains(page)) {
                 scannedPages.add(page);
                 log.info("Scanning internal page {}", page.getCurrentUrl());
@@ -149,7 +148,7 @@ public class WebCrawler implements ThreadCompleteListener {
         public void removeThreadCompleteListener(ThreadCompleteListener listener) {
             listeners.remove(listener);
         }
-        
+
         private void notifyListeners() {
             for (ThreadCompleteListener listener : listeners) {
                 listener.onThreadComplete(this.id);
@@ -165,15 +164,11 @@ public class WebCrawler implements ThreadCompleteListener {
         @Override
         public void run() {
             isRequestedToStop.set(false);
-            try {
-                scan(this.startPage);
-                while (!isStopped()) {
-                    scan(this.website.getInternalLinks().poll());
-                }
-                notifyListeners();
-            } catch (IOException e) {
-                log.warn(e.getMessage(), e);
+            scan(this.startPage);
+            while (!isStopped()) {
+                scan(this.website.getInternalLinks().poll());
             }
+            notifyListeners();
         }
     }
 
