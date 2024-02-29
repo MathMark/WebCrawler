@@ -24,7 +24,7 @@ public class CrawlController {
     
     @PostMapping("/start")
     public ResponseEntity<CrawlResponse> startCrawl(@RequestBody @Valid CrawlRequest crawlRequest) {
-        CrawlResponse crawlResponse = crawlerService.startCrawling(crawlRequest.getStartUrl(), crawlRequest.getThreadsCount());
+        CrawlResponse crawlResponse = crawlerService.startCrawling(crawlRequest);
         return ResponseEntity.ok(crawlResponse);
     }
     
@@ -42,6 +42,5 @@ public class CrawlController {
 
     /** TODO: add the following endpoints:
      * pause crawling
-     * get reports
      */
 }

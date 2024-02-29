@@ -16,4 +16,5 @@ public class CrawlRequest {
     private int threadsCount;
     @Range(min = 0, max = 3000, message = "Allowed setting max 3000ms (3 seconds) delay.")
     private int delayMs;
+    private String projectName;
 }

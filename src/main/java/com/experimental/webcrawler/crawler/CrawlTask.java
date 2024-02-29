@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class WebCrawler implements ThreadCompleteListener {
+public class CrawlTask implements ThreadCompleteListener {
 
     private final Website website;
     private final Set<Page> scannedPages;
@@ -31,7 +31,7 @@ public class WebCrawler implements ThreadCompleteListener {
     private final WebParser parser = new WebParser();
     private final List<CrawlCompleteListener> listeners = new ArrayList<>();
 
-    public WebCrawler(Website website) {
+    public CrawlTask(Website website) {
         this.website = website;
         this.scannedPages = Collections.synchronizedSet(new HashSet<>());
     }
@@ -87,6 +87,7 @@ public class WebCrawler implements ThreadCompleteListener {
             threads.put(id, thread);
             executorService.execute(thread);
         }
+        
         status = Status.RUNNING;
     }
 
@@ -106,6 +107,7 @@ public class WebCrawler implements ThreadCompleteListener {
             if (executorService != null && !executorService.isShutdown()) {
                 executorService.shutdown();
             }
+            website.setPagesCrawled(scannedPages.size());
             notifyListeners();
         }
     }

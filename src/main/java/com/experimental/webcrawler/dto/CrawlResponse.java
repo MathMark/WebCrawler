@@ -10,7 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class CrawlResponse {
-    private String domain;
     private String initialUrl;
+    private String projectName;
+    private String domain;
     private String taskId;
+    private String websiteProjectId;
 }

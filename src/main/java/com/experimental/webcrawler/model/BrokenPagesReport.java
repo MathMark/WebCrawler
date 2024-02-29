@@ -4,21 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-@Document(value = "websiteReport")
-public class WebsiteProject {
-    @Id
+@Document("brokenPagesReport")
+public class BrokenPagesReport {
     private String id;
-    private String name;
-    private String domain;
-    private String initialUrl;
-    private int crawledPages;
-    private String brokenPagesReportId;
+    private List<BrokenPageEntity> brokenPages;
 }

@@ -12,8 +12,11 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 @RequiredArgsConstructor
 public class Website {
+    private final String id;
+    private String projectName;
     private final String url;
     private final String domain;
+    private int pagesCrawled;
     
     private final BlockingQueue<Page> internalLinks = new LinkedBlockingDeque<>();
     private final Set<Page> externalLinks = new HashSet<>();
@@ -22,6 +25,7 @@ public class Website {
     private final Object externalLinkMonitor = new Object();
     private final Object urlMonitor = new Object();
     private final Object domainMonitor = new Object();
+    private final Object pagesCrawledMonitor = new Object();
 
     public String getUrl() {
         synchronized (urlMonitor) {
@@ -48,5 +52,28 @@ public class Website {
             return domain;
         }
     }
+
+    public int getPagesCrawled() {
+        synchronized (pagesCrawledMonitor) {
+            return pagesCrawled;
+        }
+    }
+
+    public void setPagesCrawled(int pagesCrawled) {
+        synchronized (pagesCrawledMonitor) {
+            this.pagesCrawled = pagesCrawled;
+        }
+    }
+
+    public synchronized String getProjectName() {
+        return projectName;
+    }
     
+    public synchronized void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+    
+    public synchronized String getId() {
+        return this.id;
+    }
 }

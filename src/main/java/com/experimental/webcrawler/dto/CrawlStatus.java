@@ -1,6 +1,6 @@
 package com.experimental.webcrawler.dto;
 
-import com.experimental.webcrawler.crawler.WebCrawler;
+import com.experimental.webcrawler.crawler.CrawlTask;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,5 +14,5 @@ public class CrawlStatus {
     private long crawledPages;
     private long remainedPages;
     private long brokenPagesCount;
-    private WebCrawler.Status status;
+    private CrawlTask.Status status;
 }

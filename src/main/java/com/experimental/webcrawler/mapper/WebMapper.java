@@ -3,21 +3,33 @@ package com.experimental.webcrawler.mapper;
 import com.experimental.webcrawler.crawler.model.BrokenPage;
 import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.model.BrokenPageEntity;
+import com.experimental.webcrawler.model.BrokenPagesReport;
 import com.experimental.webcrawler.model.WebsiteProject;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class WebMapper {
     private WebMapper() {}
     
-    public static WebsiteProject mapToWebSiteReport(Website website) {
-        WebsiteProject websiteProject = new WebsiteProject();
-        websiteProject.setUrl(website.getUrl());
-        websiteProject.setDomain(website.getDomain());
-        List<BrokenPageEntity> brokenPageEntityList = website.getBrokenPages().stream()
+    public static BrokenPagesReport mapToBrokenPageReport(List<BrokenPage> brokenPages) {
+        List<BrokenPageEntity> brokenPageEntityList = brokenPages.stream()
                 .map(WebMapper::mapToBrokenPageEntity).collect(Collectors.toList());
-        websiteProject.setBrokenPages(brokenPageEntityList);
+        BrokenPagesReport brokenPagesReport = new BrokenPagesReport();
+        brokenPagesReport.setId(UUID.randomUUID().toString());
+        brokenPagesReport.setBrokenPages(brokenPageEntityList);
+        return brokenPagesReport;
+    }
+    
+    public static WebsiteProject mapToWebsiteProject(Website website, BrokenPagesReport brokenPagesReport) {
+        WebsiteProject websiteProject = new WebsiteProject();
+        websiteProject.setId(website.getId());
+        websiteProject.setInitialUrl(website.getUrl());
+        websiteProject.setDomain(website.getDomain());
+        websiteProject.setName(website.getProjectName());
+        websiteProject.setBrokenPagesReportId(brokenPagesReport.getId());
+        websiteProject.setCrawledPages(website.getPagesCrawled());
         return websiteProject;
     }
     
