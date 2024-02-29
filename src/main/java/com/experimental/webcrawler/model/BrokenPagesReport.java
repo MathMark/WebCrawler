@@ -16,4 +16,5 @@ import java.util.List;
 public class BrokenPagesReport {
     private String id;
     private List<BrokenPageEntity> brokenPages;
+    private String websiteProjectId;
 }

@@ -20,5 +20,4 @@ public class WebsiteProject {
     private String domain;
     private String initialUrl;
     private int crawledPages;
-    private String brokenPagesReportId;
 }

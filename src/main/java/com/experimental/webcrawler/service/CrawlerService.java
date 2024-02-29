@@ -98,10 +98,10 @@ public class CrawlerService implements CrawlCompleteListener {
 
     @Override
     public void onCrawlCompete(Website website) {
-        BrokenPagesReport brokenPagesReport = WebMapper.mapToBrokenPageReport(website.getBrokenPages());
-        brokenPagesReportRepository.save(brokenPagesReport);
-        WebsiteProject websiteProject = WebMapper.mapToWebsiteProject(website, brokenPagesReport);
+        WebsiteProject websiteProject = WebMapper.mapToWebsiteProject(website);
         websiteProjectRepository.save(websiteProject);
+        BrokenPagesReport brokenPagesReport = WebMapper.mapToBrokenPageReport(website.getBrokenPages(), websiteProject.getId());
+        brokenPagesReportRepository.save(brokenPagesReport);
         log.info("Report for website {} has been successfully saved.", website.getDomain());
     }
 }
