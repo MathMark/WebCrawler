@@ -3,12 +3,14 @@ package com.experimental.webcrawler.parser;
 import com.experimental.webcrawler.crawler.model.BrokenPage;
 import com.experimental.webcrawler.crawler.model.Page;
 import com.experimental.webcrawler.crawler.model.Website;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.URI;
@@ -21,9 +23,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Component
+@RequiredArgsConstructor
 public class WebParser {
 
-    private final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
+    private final HttpClient httpClient;
 
     public void parseLinks(Page pageToParse, Website website) {
 

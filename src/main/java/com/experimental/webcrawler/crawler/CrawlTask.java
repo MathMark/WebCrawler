@@ -21,20 +21,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
+@RequiredArgsConstructor
 public class CrawlTask implements ThreadCompleteListener {
 
     private final Website website;
-    private final Set<Page> scannedPages;
-    private final Map<String, CompletableRunnable> threads = new ConcurrentHashMap<>();
+    private final WebParser parser;
     private ExecutorService executorService;
+    
+    private final Set<Page> scannedPages = Collections.synchronizedSet(new HashSet<>());
+    private final Map<String, CompletableRunnable> threads = new ConcurrentHashMap<>();
+    
     private Status status;
-    private final WebParser parser = new WebParser();
     private final List<CrawlCompleteListener> listeners = new ArrayList<>();
-
-    public CrawlTask(Website website) {
-        this.website = website;
-        this.scannedPages = Collections.synchronizedSet(new HashSet<>());
-    }
+    
 
     public void addListener(CrawlCompleteListener listener) {
         listeners.add(listener);

@@ -6,6 +6,6 @@ import lombok.Data;
 
 @Data
 public class ReportsDto {
-    private String brokenPagesReportId;
+    private ReportDto report;
     // TODO: Add other report ids.
 }

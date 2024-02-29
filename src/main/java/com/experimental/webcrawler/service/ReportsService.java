@@ -1,6 +1,7 @@
 package com.experimental.webcrawler.service;
 
 import com.experimental.webcrawler.dto.BrokenPagesReportResponse;
+import com.experimental.webcrawler.dto.ReportDto;
 import com.experimental.webcrawler.dto.ReportsDto;
 import com.experimental.webcrawler.exception.ReportNotFoundException;
 import com.experimental.webcrawler.mapper.WebMapper;
@@ -21,7 +22,13 @@ public class ReportsService {
     public ReportsDto getAllReports(String websiteProjectId) {
         ReportsDto reportsDto = new ReportsDto();
         Optional<BrokenPagesReport> brokenPagesReportOptional = brokenPagesReportRepository.findByWebsiteProjectId(websiteProjectId);
-        brokenPagesReportOptional.ifPresent(brokenPagesReport -> reportsDto.setBrokenPagesReportId(brokenPagesReport.getId()));
+        brokenPagesReportOptional.ifPresent(brokenPagesReport -> {
+            ReportDto report = new ReportDto();
+            report.setReportId(brokenPagesReport.getId());
+            report.setReportType(ReportDto.ReportType.BROKEN_PAGES);
+            report.setPagesCount(brokenPagesReport.getBrokenPages().size());
+            reportsDto.setReport(report);
+        });
         return reportsDto;
     }
     

@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/crawl")
 @RequiredArgsConstructor
@@ -39,6 +41,13 @@ public class CrawlController {
         CrawlStatus crawlStatus = crawlerService.stopCrawling(taskId);
         return ResponseEntity.ok(crawlStatus);
     }
+    
+    @GetMapping("/all")
+    public ResponseEntity<List<CrawlStatus>> getAllTasks() {
+        List<CrawlStatus> tasks = crawlerService.getAllTasks();
+        return ResponseEntity.ok(tasks);
+    }
+    
 
     /** TODO: add the following endpoints:
      * pause crawling

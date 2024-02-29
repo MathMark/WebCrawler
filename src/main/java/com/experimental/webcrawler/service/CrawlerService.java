@@ -9,32 +9,44 @@ import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.mapper.WebMapper;
 import com.experimental.webcrawler.model.BrokenPagesReport;
 import com.experimental.webcrawler.model.WebsiteProject;
+import com.experimental.webcrawler.parser.WebParser;
 import com.experimental.webcrawler.repository.BrokenPagesReportRepository;
 import com.experimental.webcrawler.repository.WebsiteProjectRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CrawlerService implements CrawlCompleteListener {
     
+    private final ObjectProvider<CrawlTask> objectProvider;
     private final WebsiteProjectRepository websiteProjectRepository;
     private final BrokenPagesReportRepository brokenPagesReportRepository;
     
     private static final Pattern pattern = Pattern.compile("^(https?://[^/]+)");
     private final Map<String, CrawlTask> tasks = new HashMap<>();
     
+    public List<CrawlStatus> getAllTasks() {
+        return tasks.values().stream().map(t -> CrawlStatus.builder().crawledPages(t.getCrawledPagesCount())
+               .remainedPages(t.getRemainedPagesCount())
+                .brokenPagesCount(t.getBrokenLinksCount())
+                .status(t.getStatus()).build()).collect(Collectors.toList());
+    }
+    
     public CrawlResponse startCrawling(CrawlRequest crawlRequest) {
         Website website = generateWebsiteProject(crawlRequest);
-        CrawlTask crawlTask = new CrawlTask(website);
+        CrawlTask crawlTask = objectProvider.getObject(website);
         crawlTask.addListener(this);
         crawlTask.crawl(crawlRequest.getThreadsCount());
         String taskId = UUID.randomUUID().toString();
