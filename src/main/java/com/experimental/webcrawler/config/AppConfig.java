@@ -22,14 +22,15 @@ public class AppConfig {
     }
     
     @Bean
-    public WebParser webParser() {
-        return new WebParser(httpClient());
+    @Scope(BeanDefinition.SCOPE_PROTOTYPE)
+    public WebParser webParser(Website website) {
+        return new WebParser(httpClient(), website);
     }
     
     @Bean
     @Scope(BeanDefinition.SCOPE_PROTOTYPE)
     public CrawlTask crawlTask(Website website) {
-        return new CrawlTask(website, webParser());
+        return new CrawlTask(website, webParser(website));
     }
     
     @Bean

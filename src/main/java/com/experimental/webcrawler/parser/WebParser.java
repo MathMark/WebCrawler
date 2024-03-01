@@ -28,10 +28,11 @@ import java.util.stream.Collectors;
 public class WebParser {
 
     private final HttpClient httpClient;
+    private final Website website;
 
-    public void parseLinks(Page pageToParse, Website website) {
+    public void parseLinks(Page pageToParse) {
 
-        String htmlBody = getHtmlSource(pageToParse, website);
+        String htmlBody = getHtmlSource(pageToParse);
         if (htmlBody != null && !htmlBody.isEmpty()) {
             Document doc = Jsoup.parse(htmlBody);
             Elements links = doc.select("a[href]");
@@ -50,7 +51,7 @@ public class WebParser {
 
     }
 
-    private String getHtmlSource(Page page, Website website) {
+    private String getHtmlSource(Page page) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(page.getCurrentUrl()))

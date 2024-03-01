@@ -65,7 +65,7 @@ public class CrawlTask implements ThreadCompleteListener {
     public void crawl(int threadCount) {
         Page pageToCrawl = new Page();
         pageToCrawl.setCurrentUrl(this.website.getUrl());
-        parser.parseLinks(pageToCrawl, website);
+        parser.parseLinks(pageToCrawl);
         List<Page> startLinks = website.getInternalLinks().stream()
                 .limit(threadCount)
                 .collect(Collectors.toList());
@@ -135,7 +135,7 @@ public class CrawlTask implements ThreadCompleteListener {
             if (!scannedPages.contains(page)) {
                 scannedPages.add(page);
                 log.info("Scanning internal page {}", page.getCurrentUrl());
-                parser.parseLinks(page, website);
+                parser.parseLinks(page);
             }
         }
 
