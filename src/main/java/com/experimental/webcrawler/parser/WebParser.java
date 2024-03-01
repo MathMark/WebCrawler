@@ -32,6 +32,8 @@ public class WebParser {
 
     private static final String A_TAG = "a[href]";
     private static final String HREF_ATTRIBUTE = "href";
+    private static final String ANCHOR_LINK = "#";
+    private static final String GET_PARAM = "?";
 
     public void parseLinks(Page pageToParse) {
         String htmlBody = getHtmlSource(pageToParse);
@@ -43,18 +45,19 @@ public class WebParser {
             }
         }
     }
-
-    // TODO: ignore all anchor links - containing '#'
+    
     private void parseLink(String currentUrl, Element link) {
         Page page = new Page();
         page.setPreviousUrl(currentUrl);
         page.setHrefText(link.text());
         String hrefUrl = parseIfRelated(link.attr(HREF_ATTRIBUTE));
-        page.setCurrentUrl(hrefUrl);
-        if (hrefUrl.startsWith(website.getDomain())) {
-            website.getInternalLinks().add(page);
-        } else {
-            website.getExternalLinks().add(page);
+        if (!hrefUrl.contains(ANCHOR_LINK) && !hrefUrl.contains(GET_PARAM)) {
+            page.setCurrentUrl(hrefUrl);
+            if (hrefUrl.startsWith(website.getDomain())) {
+                website.getInternalLinks().add(page);
+            } else {
+                website.getExternalLinks().add(page);
+            }
         }
     }
 
