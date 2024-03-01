@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class CrawlStatus {
+    private String taskId;
     private long crawledPages;
     private long remainedPages;
     private long brokenPagesCount;

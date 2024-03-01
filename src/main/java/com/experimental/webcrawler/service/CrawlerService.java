@@ -9,9 +9,9 @@ import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.mapper.WebMapper;
 import com.experimental.webcrawler.model.BrokenPagesReport;
 import com.experimental.webcrawler.model.WebsiteProject;
-import com.experimental.webcrawler.parser.WebParser;
 import com.experimental.webcrawler.repository.BrokenPagesReportRepository;
-import com.experimental.webcrawler.repository.WebsiteProjectRepository;
+
+import com.experimental.webcrawler.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -31,17 +31,17 @@ import java.util.stream.Collectors;
 public class CrawlerService implements CrawlCompleteListener {
     
     private final ObjectProvider<CrawlTask> objectProvider;
-    private final WebsiteProjectRepository websiteProjectRepository;
+    private final ProjectRepository websiteProjectRepository;
     private final BrokenPagesReportRepository brokenPagesReportRepository;
     
     private static final Pattern pattern = Pattern.compile("^(https?://[^/]+)");
     private final Map<String, CrawlTask> tasks = new HashMap<>();
     
     public List<CrawlStatus> getAllTasks() {
-        return tasks.values().stream().map(t -> CrawlStatus.builder().crawledPages(t.getCrawledPagesCount())
-               .remainedPages(t.getRemainedPagesCount())
-                .brokenPagesCount(t.getBrokenLinksCount())
-                .status(t.getStatus()).build()).collect(Collectors.toList());
+        return tasks.entrySet().stream().map(e -> CrawlStatus.builder().taskId(e.getKey()).crawledPages(e.getValue().getCrawledPagesCount())
+               .remainedPages(e.getValue().getRemainedPagesCount())
+                .brokenPagesCount(e.getValue().getBrokenLinksCount())
+                .status(e.getValue().getStatus()).build()).collect(Collectors.toList());
     }
     
     public CrawlResponse startCrawling(CrawlRequest crawlRequest) {

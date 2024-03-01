@@ -6,6 +6,8 @@ import com.experimental.webcrawler.parser.WebParser;
 import com.experimental.webcrawler.service.CrawlCompleteListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,7 +17,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -26,6 +27,8 @@ public class CrawlTask implements ThreadCompleteListener {
 
     private final Website website;
     private final WebParser parser;
+    @Autowired
+    private ObjectProvider<ExecutorService> executorServiceProvider;
     private ExecutorService executorService;
     
     private final Set<Page> scannedPages = Collections.synchronizedSet(new HashSet<>());
@@ -73,7 +76,7 @@ public class CrawlTask implements ThreadCompleteListener {
         } else if (startLinks.size() < threadCount) {
             threadCount = startLinks.size();
         }
-        executorService = Executors.newFixedThreadPool(threadCount);
+        executorService = executorServiceProvider.getObject(threadCount);
         log.info("Starting crawling website {} with {} threads", website.getDomain(), threadCount);
 
         for (Page startLink : startLinks) {

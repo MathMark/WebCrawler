@@ -54,6 +54,7 @@ public class WebParser {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(page.getCurrentUrl()))
+                    .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")
                     .GET()
                     .build();
             HttpResponse<String> httpResponse = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
