@@ -30,41 +30,57 @@ public class WebParser {
     private final HttpClient httpClient;
     private final Website website;
 
-    public void parseLinks(Page pageToParse) {
+    private static final String A_TAG = "a[href]";
+    private static final String HREF_ATTRIBUTE = "href";
 
+    public void parseLinks(Page pageToParse) {
         String htmlBody = getHtmlSource(pageToParse);
         if (htmlBody != null && !htmlBody.isEmpty()) {
             Document doc = Jsoup.parse(htmlBody);
-            Elements links = doc.select("a[href]");
+            Elements links = doc.select(A_TAG);
             for (Element link : links) {
-                Page page = new Page();
-                page.setPreviousUrl(pageToParse.getCurrentUrl());
-                page.setCurrentUrl(link.attr("href"));
-                page.setHrefText(link.text());
-                if (page.getCurrentUrl().startsWith(website.getDomain())) {
-                    website.getInternalLinks().add(page);
-                } else {
-                    website.getExternalLinks().add(page);
-                }
+                parseLink(pageToParse.getCurrentUrl(), link);
             }
         }
+    }
 
+    // TODO: ignore all anchor links - containing '#'
+    private void parseLink(String currentUrl, Element link) {
+        Page page = new Page();
+        page.setPreviousUrl(currentUrl);
+        page.setHrefText(link.text());
+        String hrefUrl = parseIfRelated(link.attr(HREF_ATTRIBUTE));
+        page.setCurrentUrl(hrefUrl);
+        if (hrefUrl.startsWith(website.getDomain())) {
+            website.getInternalLinks().add(page);
+        } else {
+            website.getExternalLinks().add(page);
+        }
+    }
+
+    private String parseIfRelated(String url) {
+        if (url.startsWith("/")) {
+            return website.getDomain() + url;
+        }
+        return url;
     }
 
     private String getHtmlSource(Page page) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(page.getCurrentUrl()))
-                    .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")
                     .GET()
                     .build();
             HttpResponse<String> httpResponse = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (!isHtml(httpResponse)) {
                 return null;
             }
-            if (isBroken(httpResponse.statusCode())) {
+            HttpStatus httpStatus = HttpStatus.resolve(httpResponse.statusCode());
+            if (isBroken(httpStatus)) {
                 BrokenPage brokenPage = BrokenPage.builder()
-                        .page(page).statusCode(httpResponse.statusCode()).build();
+                        .page(page)
+                        .statusCode(httpResponse.statusCode())
+                        .build();
                 website.getBrokenPages().add(brokenPage);
             }
             return httpResponse.body();
@@ -79,12 +95,10 @@ public class WebParser {
         return null;
     }
 
-    private boolean isBroken(int statusCode) {
-        return statusCode == HttpStatus.NOT_FOUND.value() ||
-                statusCode == HttpStatus.GONE.value() ||
-                statusCode == HttpStatus.FORBIDDEN.value();
+    private boolean isBroken(HttpStatus httpStatus) {
+        return httpStatus == null || httpStatus.is4xxClientError();
     }
-    
+
     private boolean isHtml(HttpResponse<String> response) {
         Map<String, List<String>> headers = response.headers().map();
         List<String> contentTypeList = headers.get("content-type");
