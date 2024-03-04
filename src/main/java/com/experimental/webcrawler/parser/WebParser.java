@@ -55,7 +55,7 @@ public class WebParser {
         String hrefUrl = parseIfRelated(link.attr(HREF_ATTRIBUTE));
         if (!hrefUrl.contains(ANCHOR_LINK) && !hrefUrl.contains(GET_PARAM)) {
             page.setCurrentUrl(hrefUrl);
-            if (hrefUrl.startsWith(crawlData.getDomain())) {
+            if (hrefUrl.startsWith(crawlData.getWebsite().getDomain())) {
                 crawlData.getInternalLinks().add(page);
             } else {
                 crawlData.getExternalLinks().add(page);
@@ -69,7 +69,7 @@ public class WebParser {
 
     private String parseIfRelated(String url) {
         if (url.startsWith("/")) {
-            return crawlData.getDomain() + url;
+            return crawlData.getWebsite().getDomain() + url;
         }
         return url;
     }

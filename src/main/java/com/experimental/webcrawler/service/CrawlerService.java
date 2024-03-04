@@ -1,6 +1,7 @@
 package com.experimental.webcrawler.service;
 
 import com.experimental.webcrawler.crawler.CrawlTask;
+import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.dto.crawl.BasicCrawlStatus;
 import com.experimental.webcrawler.dto.crawl.CrawlRequest;
 import com.experimental.webcrawler.dto.crawl.CrawlResponse;
@@ -44,24 +45,26 @@ public class CrawlerService implements CrawlCompleteListener {
     
     public List<BasicCrawlStatus> getAllTasks() {
         return tasks.entrySet().stream().map(e -> BasicCrawlStatus.builder().taskId(e.getKey())
-                .projectName(e.getValue().getProjectName())
-                .domain(e.getValue().getDomain())
+                .projectName(e.getValue().getCrawlData().getWebsite().getProjectName())
+                .domain(e.getValue().getCrawlData().getWebsite().getDomain())
                 .status(e.getValue().getStatus()).build()).collect(Collectors.toList());
     }
     
     public CrawlResponse startCrawling(CrawlRequest crawlRequest) {
-        CrawlData crawlData = generateWebsiteProject(crawlRequest);
-        CrawlTask crawlTask = objectProvider.getObject(crawlData);
+        Website website = generateWebsiteProject(crawlRequest);
+        String dataId = UUID.randomUUID().toString();
+        CrawlData data = new CrawlData(dataId, website);
+        CrawlTask crawlTask = objectProvider.getObject(data);
         crawlTask.addListener(this);
         crawlTask.crawl(crawlRequest.getThreadsCount());
         String taskId = UUID.randomUUID().toString();
         tasks.put(taskId, crawlTask);
         return CrawlResponse.builder()
                 .initialUrl(crawlRequest.getStartUrl())
-                .domain(crawlData.getDomain())
+                .domain(website.getDomain())
                 .taskId(taskId)
-                .websiteProjectId(crawlData.getId())
-                .projectName(crawlData.getProjectName())
+                .websiteProjectId(dataId)
+                .projectName(website.getProjectName())
                 .build();
     }
     
@@ -70,14 +73,7 @@ public class CrawlerService implements CrawlCompleteListener {
         if (crawlTask == null) {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
         }
-        CrawlStatus crawlStatus = new CrawlStatus();
-        crawlStatus.setProjectName(crawlTask.getProjectName());
-        crawlStatus.setDomain(crawlTask.getDomain());
-        crawlStatus.setCrawledPages(crawlTask.getCrawledPagesCount());
-        crawlStatus.setRemainedPages(crawlTask.getRemainedPagesCount());
-        crawlStatus.setBrokenPagesCount(crawlTask.getBrokenLinksCount());
-        crawlStatus.setStatus(crawlTask.getStatus());
-        return crawlStatus;
+        return createCrawlStatus(crawlTask);
     }
     
     public CrawlStatus stopCrawling(String taskId) {
@@ -86,27 +82,30 @@ public class CrawlerService implements CrawlCompleteListener {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
         }
         crawlTask.shutDown();
-        return CrawlStatus.builder()
-                .projectName(crawlTask.getProjectName())
-                .domain(crawlTask.getDomain())
-                .crawledPages(crawlTask.getCrawledPagesCount())
-                .remainedPages(crawlTask.getRemainedPagesCount())
-                .brokenPagesCount(crawlTask.getBrokenLinksCount())
-                .status(crawlTask.getStatus())
+        return createCrawlStatus(crawlTask);
+    }
+    
+    private CrawlStatus createCrawlStatus(CrawlTask task) {
+        CrawlData crawlData = task.getCrawlData();
+        Website website = crawlData.getWebsite();
+         return CrawlStatus.builder()
+                .projectName(website.getProjectName())
+                .domain(website.getDomain())
+                .crawledPages(crawlData.getScannedPages().size())
+                .remainedPages(crawlData.getInternalLinks().size())
+                .brokenPagesCount(crawlData.getBrokenPages().size())
+                .status(task.getStatus())
                 .build();
     }
     
-    private CrawlData generateWebsiteProject(CrawlRequest crawlRequest) {
+    private Website generateWebsiteProject(CrawlRequest crawlRequest) {
         String url = crawlRequest.getStartUrl();
         String domain = cutDomain(url);
         String projectName = crawlRequest.getProjectName();
         if (projectName == null || "".equals(projectName)) {
             projectName = domain;
         }
-        String projectId = UUID.randomUUID().toString();
-        CrawlData crawlData = new CrawlData(projectId, url, domain);
-        crawlData.setProjectName(projectName);
-        return crawlData;
+        return new Website(projectName, url, domain);
     }
     
     private String cutDomain(String url) {
@@ -123,8 +122,8 @@ public class CrawlerService implements CrawlCompleteListener {
         websiteProjectRepository.save(websiteProject);
         BrokenPagesReport brokenPagesReport = WebMapper.mapToBrokenPageReport(event.getCrawlData().getBrokenPages(), websiteProject.getId());
         brokenPagesReportRepository.save(brokenPagesReport);
-        CrawledPagesReport crawledPagesReport = WebMapper.mapToCrawledPagesReport(event.getCrawledPages());
+        CrawledPagesReport crawledPagesReport = WebMapper.mapToCrawledPagesReport(event.getCrawlData().getScannedPages().stream().toList());
         crawledPagesReportRepository.save(crawledPagesReport);
-        log.info("Report for website {} has been successfully saved.", event.getCrawlData().getDomain());
+        log.info("Report for website {} has been successfully saved.", event.getCrawlData().getWebsite().getDomain());
     }
 }

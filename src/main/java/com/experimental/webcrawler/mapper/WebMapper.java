@@ -3,6 +3,7 @@ package com.experimental.webcrawler.mapper;
 import com.experimental.webcrawler.crawler.model.BrokenPage;
 import com.experimental.webcrawler.crawler.model.Page;
 import com.experimental.webcrawler.crawler.model.CrawlData;
+import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.dto.report.BrokenPagesReportResponse;
 import com.experimental.webcrawler.model.BrokenPageEntity;
 import com.experimental.webcrawler.model.BrokenPagesReport;
@@ -57,11 +58,12 @@ public class WebMapper {
     
     public static WebsiteProject mapToWebsiteProject(CrawlData crawlData) {
         WebsiteProject websiteProject = new WebsiteProject();
+        Website website = crawlData.getWebsite();
         websiteProject.setId(crawlData.getId());
-        websiteProject.setInitialUrl(crawlData.getUrl());
-        websiteProject.setDomain(crawlData.getDomain());
-        websiteProject.setName(crawlData.getProjectName());
-        websiteProject.setCrawledPages(crawlData.getPagesCrawled());
+        websiteProject.setInitialUrl(website.getStartUrl());
+        websiteProject.setDomain(website.getDomain());
+        websiteProject.setName(website.getProjectName());
+        websiteProject.setCrawledPages(crawlData.getScannedPages().size());
         return websiteProject;
     }
     

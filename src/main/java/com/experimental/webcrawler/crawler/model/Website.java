@@ -1,7 +1,9 @@
 package com.experimental.webcrawler.crawler.model;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Getter
 @RequiredArgsConstructor
 public class Website {
     private final String projectName;
