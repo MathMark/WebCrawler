@@ -1,4 +1,4 @@
-package com.experimental.webcrawler.dto;
+package com.experimental.webcrawler.dto.crawl;
 
 import com.experimental.webcrawler.crawler.CrawlTask;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class CrawlStatus {
-    private String taskId;
+    private String projectName;
+    private String domain;
     private long crawledPages;
     private long remainedPages;
     private long brokenPagesCount;

@@ -61,6 +61,14 @@ public class CrawlTask implements ThreadCompleteListener {
     public int getBrokenLinksCount() {
         return this.website.getBrokenPages().size();
     }
+    
+    public String getDomain() {
+        return website.getDomain();
+    }
+    
+    public String getProjectName() {
+        return website.getProjectName();
+    }
 
     public void crawl(int threadCount) {
         Page pageToCrawl = new Page();

@@ -2,7 +2,7 @@ package com.experimental.webcrawler.mapper;
 
 import com.experimental.webcrawler.crawler.model.BrokenPage;
 import com.experimental.webcrawler.crawler.model.Website;
-import com.experimental.webcrawler.dto.BrokenPagesReportResponse;
+import com.experimental.webcrawler.dto.report.BrokenPagesReportResponse;
 import com.experimental.webcrawler.model.BrokenPageEntity;
 import com.experimental.webcrawler.model.BrokenPagesReport;
 import com.experimental.webcrawler.model.WebsiteProject;

@@ -1,7 +1,7 @@
 package com.experimental.webcrawler.controller;
 
-import com.experimental.webcrawler.dto.BrokenPagesReportResponse;
-import com.experimental.webcrawler.dto.ReportsDto;
+import com.experimental.webcrawler.dto.report.BrokenPagesReportResponse;
+import com.experimental.webcrawler.dto.report.ReportsDto;
 import com.experimental.webcrawler.service.ReportsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

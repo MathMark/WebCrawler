@@ -1,8 +1,9 @@
 package com.experimental.webcrawler.controller;
 
-import com.experimental.webcrawler.dto.CrawlRequest;
-import com.experimental.webcrawler.dto.CrawlResponse;
-import com.experimental.webcrawler.dto.CrawlStatus;
+import com.experimental.webcrawler.dto.crawl.BasicCrawlStatus;
+import com.experimental.webcrawler.dto.crawl.CrawlRequest;
+import com.experimental.webcrawler.dto.crawl.CrawlResponse;
+import com.experimental.webcrawler.dto.crawl.CrawlStatus;
 import com.experimental.webcrawler.service.CrawlerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,8 +44,8 @@ public class CrawlController {
     }
     
     @GetMapping("/all")
-    public ResponseEntity<List<CrawlStatus>> getAllTasks() {
-        List<CrawlStatus> tasks = crawlerService.getAllTasks();
+    public ResponseEntity<List<BasicCrawlStatus>> getAllTasks() {
+        List<BasicCrawlStatus> tasks = crawlerService.getAllTasks();
         return ResponseEntity.ok(tasks);
     }
     

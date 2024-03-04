@@ -1,5 +1,4 @@
-package com.experimental.webcrawler.dto;
-
+package com.experimental.webcrawler.dto.report;
 
 import lombok.Data;
 

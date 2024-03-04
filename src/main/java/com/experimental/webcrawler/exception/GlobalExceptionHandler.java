@@ -1,6 +1,6 @@
 package com.experimental.webcrawler.exception;
 
-import com.experimental.webcrawler.dto.ErrorResponseDto;
+import com.experimental.webcrawler.dto.error.ErrorResponseDto;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;

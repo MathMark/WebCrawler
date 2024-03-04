@@ -1,9 +1,10 @@
 package com.experimental.webcrawler.service;
 
 import com.experimental.webcrawler.crawler.CrawlTask;
-import com.experimental.webcrawler.dto.CrawlRequest;
-import com.experimental.webcrawler.dto.CrawlResponse;
-import com.experimental.webcrawler.dto.CrawlStatus;
+import com.experimental.webcrawler.dto.crawl.BasicCrawlStatus;
+import com.experimental.webcrawler.dto.crawl.CrawlRequest;
+import com.experimental.webcrawler.dto.crawl.CrawlResponse;
+import com.experimental.webcrawler.dto.crawl.CrawlStatus;
 import com.experimental.webcrawler.exception.TaskNotFoundException;
 import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.mapper.WebMapper;
@@ -37,10 +38,10 @@ public class CrawlerService implements CrawlCompleteListener {
     private static final Pattern pattern = Pattern.compile("^(https?://[^/]+)");
     private final Map<String, CrawlTask> tasks = new HashMap<>();
     
-    public List<CrawlStatus> getAllTasks() {
-        return tasks.entrySet().stream().map(e -> CrawlStatus.builder().taskId(e.getKey()).crawledPages(e.getValue().getCrawledPagesCount())
-               .remainedPages(e.getValue().getRemainedPagesCount())
-                .brokenPagesCount(e.getValue().getBrokenLinksCount())
+    public List<BasicCrawlStatus> getAllTasks() {
+        return tasks.entrySet().stream().map(e -> BasicCrawlStatus.builder().taskId(e.getKey())
+                .projectName(e.getValue().getProjectName())
+                .domain(e.getValue().getDomain())
                 .status(e.getValue().getStatus()).build()).collect(Collectors.toList());
     }
     
@@ -66,6 +67,8 @@ public class CrawlerService implements CrawlCompleteListener {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
         }
         CrawlStatus crawlStatus = new CrawlStatus();
+        crawlStatus.setProjectName(crawlTask.getProjectName());
+        crawlStatus.setDomain(crawlTask.getDomain());
         crawlStatus.setCrawledPages(crawlTask.getCrawledPagesCount());
         crawlStatus.setRemainedPages(crawlTask.getRemainedPagesCount());
         crawlStatus.setBrokenPagesCount(crawlTask.getBrokenLinksCount());
