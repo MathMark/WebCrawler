@@ -1,9 +1,10 @@
 package com.experimental.webcrawler.crawler;
 
 import com.experimental.webcrawler.crawler.model.Page;
-import com.experimental.webcrawler.crawler.model.Website;
+import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.parser.WebParser;
 import com.experimental.webcrawler.service.CrawlCompleteListener;
+import com.experimental.webcrawler.service.event.CrawlCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -25,13 +26,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CrawlTask implements ThreadCompleteListener {
 
-    private final Website website;
+    private final CrawlData crawlData;
     private final WebParser parser;
     @Autowired
     private ObjectProvider<ExecutorService> executorServiceProvider;
     private ExecutorService executorService;
     
     private final Set<Page> scannedPages = Collections.synchronizedSet(new HashSet<>());
+    
+    public final List<Page> getScannedPages() {
+        return Collections.unmodifiableList(scannedPages.stream().toList());
+    }
     private final Map<String, CompletableRunnable> threads = new ConcurrentHashMap<>();
     
     private Status status;
@@ -47,7 +52,7 @@ public class CrawlTask implements ThreadCompleteListener {
     }
 
     public int getRemainedPagesCount() {
-        return this.website.getInternalLinks().size();
+        return this.crawlData.getInternalLinks().size();
     }
 
     public int getCrawledPagesCount() {
@@ -59,22 +64,22 @@ public class CrawlTask implements ThreadCompleteListener {
     }
 
     public int getBrokenLinksCount() {
-        return this.website.getBrokenPages().size();
+        return this.crawlData.getBrokenPages().size();
     }
     
     public String getDomain() {
-        return website.getDomain();
+        return crawlData.getDomain();
     }
     
     public String getProjectName() {
-        return website.getProjectName();
+        return crawlData.getProjectName();
     }
 
     public void crawl(int threadCount) {
         Page pageToCrawl = new Page();
-        pageToCrawl.setCurrentUrl(this.website.getUrl());
+        pageToCrawl.setCurrentUrl(this.crawlData.getUrl());
         parser.parseLinks(pageToCrawl);
-        List<Page> startLinks = website.getInternalLinks().stream()
+        List<Page> startLinks = crawlData.getInternalLinks().stream()
                 .limit(threadCount)
                 .collect(Collectors.toList());
         if (startLinks.isEmpty()) {
@@ -85,12 +90,12 @@ public class CrawlTask implements ThreadCompleteListener {
             threadCount = startLinks.size();
         }
         executorService = executorServiceProvider.getObject(threadCount);
-        log.info("Starting crawling website {} with {} threads", website.getDomain(), threadCount);
+        log.info("Starting crawling website {} with {} threads", crawlData.getDomain(), threadCount);
 
         for (Page startLink : startLinks) {
             String id = UUID.randomUUID().toString();
             CompletableRunnable thread = new CrawlingThread(id, startLink,
-                    this.website,
+                    this.crawlData,
                     this.scannedPages,
                     parser);
             thread.addThreadCompleteListener(this);
@@ -117,14 +122,15 @@ public class CrawlTask implements ThreadCompleteListener {
             if (executorService != null && !executorService.isShutdown()) {
                 executorService.shutdown();
             }
-            website.setPagesCrawled(scannedPages.size());
+            crawlData.setPagesCrawled(scannedPages.size());
             notifyListeners();
         }
     }
 
     private void notifyListeners() {
         for (CrawlCompleteListener listener : listeners) {
-            listener.onCrawlCompete(website);
+            CrawlCompletedEvent event = new CrawlCompletedEvent(crawlData, getScannedPages());
+            listener.onCrawlCompete(event);
         }
     }
 
@@ -133,7 +139,7 @@ public class CrawlTask implements ThreadCompleteListener {
 
         private final String id;
         private final Page startPage;
-        private final Website website;
+        private final CrawlData crawlData;
         private final Set<Page> scannedPages;
         private final AtomicBoolean isRequestedToStop = new AtomicBoolean();
         private final List<ThreadCompleteListener> listeners = new ArrayList<>();
@@ -141,9 +147,9 @@ public class CrawlTask implements ThreadCompleteListener {
 
         public void scan(Page page) {
             if (!scannedPages.contains(page)) {
-                scannedPages.add(page);
                 log.info("Scanning internal page {}", page.getCurrentUrl());
                 parser.parseLinks(page);
+                scannedPages.add(page);
             }
         }
 
@@ -168,7 +174,7 @@ public class CrawlTask implements ThreadCompleteListener {
         }
 
         private boolean isStopped() {
-            return this.website.getInternalLinks().isEmpty() ||
+            return this.crawlData.getInternalLinks().isEmpty() ||
                     Thread.currentThread().isInterrupted()
                     || isRequestedToStop.get();
         }
@@ -178,7 +184,7 @@ public class CrawlTask implements ThreadCompleteListener {
             isRequestedToStop.set(false);
             scan(this.startPage);
             while (!isStopped()) {
-                scan(this.website.getInternalLinks().poll());
+                scan(this.crawlData.getInternalLinks().poll());
             }
             notifyListeners();
         }

@@ -6,10 +6,16 @@ public class Page {
     private String previousUrl;
     private String currentUrl;
     private String hrefText;
+    private String title;
+    private String description;
+    private String robotsContent;
     
     private final Object previousUrlMonitor = new Object();
     private final Object currentUrlMonitor = new Object();
     private final Object hrefTextMonitor  = new Object();
+    private final Object titleMonitor = new Object();
+    private final Object descriptionMonitor = new Object();
+    private final Object robotsContentMonitor = new Object();
 
     public String getPreviousUrl() {
         synchronized (previousUrlMonitor) {
@@ -38,6 +44,42 @@ public class Page {
     public String getHrefText() {
         synchronized (hrefTextMonitor) {
              return hrefText;
+        }
+    }
+
+    public String getTitle() {
+        synchronized (titleMonitor) {
+            return title;
+        }
+    }
+
+    public void setTitle(String title) {
+        synchronized (titleMonitor) {
+            this.title = title;
+        }
+    }
+
+    public String getDescription() {
+        synchronized (descriptionMonitor) {
+            return description;
+        }
+    }
+
+    public void setDescription(String description) {
+        synchronized (descriptionMonitor) {
+            this.description = description;
+        }
+    }
+
+    public String getRobotsContent() {
+        synchronized (robotsContentMonitor) {
+            return robotsContent;
+        }
+    }
+
+    public void setRobotsContent(String robotsContent) {
+        synchronized (robotsContentMonitor) {
+            this.robotsContent = robotsContent;
         }
     }
 

@@ -2,7 +2,7 @@ package com.experimental.webcrawler.parser;
 
 import com.experimental.webcrawler.crawler.model.BrokenPage;
 import com.experimental.webcrawler.crawler.model.Page;
-import com.experimental.webcrawler.crawler.model.Website;
+import com.experimental.webcrawler.crawler.model.CrawlData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -28,9 +28,10 @@ import java.util.stream.Collectors;
 public class WebParser {
 
     private final HttpClient httpClient;
-    private final Website website;
+    private final CrawlData crawlData;
 
     private static final String A_TAG = "a[href]";
+    private static final String TITLE_TAG = "title";
     private static final String HREF_ATTRIBUTE = "href";
     private static final String ANCHOR_LINK = "#";
     private static final String GET_PARAM = "?";
@@ -39,6 +40,7 @@ public class WebParser {
         String htmlBody = getHtmlSource(pageToParse);
         if (htmlBody != null && !htmlBody.isEmpty()) {
             Document doc = Jsoup.parse(htmlBody);
+            parseContent(doc, pageToParse);
             Elements links = doc.select(A_TAG);
             for (Element link : links) {
                 parseLink(pageToParse.getCurrentUrl(), link);
@@ -53,17 +55,21 @@ public class WebParser {
         String hrefUrl = parseIfRelated(link.attr(HREF_ATTRIBUTE));
         if (!hrefUrl.contains(ANCHOR_LINK) && !hrefUrl.contains(GET_PARAM)) {
             page.setCurrentUrl(hrefUrl);
-            if (hrefUrl.startsWith(website.getDomain())) {
-                website.getInternalLinks().add(page);
+            if (hrefUrl.startsWith(crawlData.getDomain())) {
+                crawlData.getInternalLinks().add(page);
             } else {
-                website.getExternalLinks().add(page);
+                crawlData.getExternalLinks().add(page);
             }
         }
+    }
+    
+    private void parseContent(Document document, Page page) {
+        page.setTitle(document.title());
     }
 
     private String parseIfRelated(String url) {
         if (url.startsWith("/")) {
-            return website.getDomain() + url;
+            return crawlData.getDomain() + url;
         }
         return url;
     }
@@ -84,7 +90,7 @@ public class WebParser {
                         .page(page)
                         .statusCode(httpResponse.statusCode())
                         .build();
-                website.getBrokenPages().add(brokenPage);
+                crawlData.getBrokenPages().add(brokenPage);
             }
             return httpResponse.body();
         } catch (URISyntaxException e) {

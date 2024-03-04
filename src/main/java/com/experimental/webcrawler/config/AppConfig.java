@@ -2,7 +2,7 @@ package com.experimental.webcrawler.config;
 
 
 import com.experimental.webcrawler.crawler.CrawlTask;
-import com.experimental.webcrawler.crawler.model.Website;
+import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.parser.WebParser;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
@@ -23,14 +23,14 @@ public class AppConfig {
     
     @Bean
     @Scope(BeanDefinition.SCOPE_PROTOTYPE)
-    public WebParser webParser(Website website) {
-        return new WebParser(httpClient(), website);
+    public WebParser webParser(CrawlData crawlData) {
+        return new WebParser(httpClient(), crawlData);
     }
     
     @Bean
     @Scope(BeanDefinition.SCOPE_PROTOTYPE)
-    public CrawlTask crawlTask(Website website) {
-        return new CrawlTask(website, webParser(website));
+    public CrawlTask crawlTask(CrawlData crawlData) {
+        return new CrawlTask(crawlData, webParser(crawlData));
     }
     
     @Bean

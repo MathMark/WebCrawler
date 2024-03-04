@@ -1,10 +1,13 @@
 package com.experimental.webcrawler.mapper;
 
 import com.experimental.webcrawler.crawler.model.BrokenPage;
-import com.experimental.webcrawler.crawler.model.Website;
+import com.experimental.webcrawler.crawler.model.Page;
+import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.dto.report.BrokenPagesReportResponse;
 import com.experimental.webcrawler.model.BrokenPageEntity;
 import com.experimental.webcrawler.model.BrokenPagesReport;
+import com.experimental.webcrawler.model.CrawledPagesReport;
+import com.experimental.webcrawler.model.PageEntity;
 import com.experimental.webcrawler.model.WebsiteProject;
 
 import java.util.List;
@@ -13,6 +16,22 @@ import java.util.stream.Collectors;
 
 public class WebMapper {
     private WebMapper() {}
+    
+    public static CrawledPagesReport mapToCrawledPagesReport(List<Page> pages) {
+        List<PageEntity> pageEntities = pages.stream().map(WebMapper::mapToPageEntity).collect(Collectors.toList());
+        CrawledPagesReport crawledPagesReport = new CrawledPagesReport();
+        crawledPagesReport.setPages(pageEntities);
+        return crawledPagesReport;
+    }
+    
+    private static PageEntity mapToPageEntity(Page page) {
+        return PageEntity.builder()
+                .title(page.getTitle())
+                .description(page.getDescription())
+                .url(page.getCurrentUrl())
+                .robotsContent(page.getRobotsContent())
+                .build();
+    }
     
     public static BrokenPagesReport mapToBrokenPageReport(List<BrokenPage> brokenPages, String websiteProjectId) {
         List<BrokenPageEntity> brokenPageEntityList = brokenPages.stream()
@@ -36,13 +55,13 @@ public class WebMapper {
         }).collect(Collectors.toList());
     }
     
-    public static WebsiteProject mapToWebsiteProject(Website website) {
+    public static WebsiteProject mapToWebsiteProject(CrawlData crawlData) {
         WebsiteProject websiteProject = new WebsiteProject();
-        websiteProject.setId(website.getId());
-        websiteProject.setInitialUrl(website.getUrl());
-        websiteProject.setDomain(website.getDomain());
-        websiteProject.setName(website.getProjectName());
-        websiteProject.setCrawledPages(website.getPagesCrawled());
+        websiteProject.setId(crawlData.getId());
+        websiteProject.setInitialUrl(crawlData.getUrl());
+        websiteProject.setDomain(crawlData.getDomain());
+        websiteProject.setName(crawlData.getProjectName());
+        websiteProject.setCrawledPages(crawlData.getPagesCrawled());
         return websiteProject;
     }
     
