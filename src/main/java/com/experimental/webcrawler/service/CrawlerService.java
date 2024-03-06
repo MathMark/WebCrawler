@@ -10,11 +10,11 @@ import com.experimental.webcrawler.exception.TaskNotFoundException;
 import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.mapper.WebMapper;
 import com.experimental.webcrawler.model.BrokenPagesReport;
-import com.experimental.webcrawler.model.CrawledPagesReport;
+import com.experimental.webcrawler.model.PageEntity;
 import com.experimental.webcrawler.model.WebsiteProject;
 import com.experimental.webcrawler.repository.BrokenPagesReportRepository;
 
-import com.experimental.webcrawler.repository.CrawledPagesReportRepository;
+import com.experimental.webcrawler.repository.PageRepository;
 import com.experimental.webcrawler.repository.ProjectRepository;
 import com.experimental.webcrawler.service.event.CrawlCompletedEvent;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class CrawlerService implements CrawlCompleteListener {
     private final ObjectProvider<CrawlTask> objectProvider;
     private final ProjectRepository websiteProjectRepository;
     private final BrokenPagesReportRepository brokenPagesReportRepository;
-    private final CrawledPagesReportRepository crawledPagesReportRepository;
+    private final PageRepository pageRepository;
     
     private static final Pattern pattern = Pattern.compile("^(https?://[^/]+)");
     private final Map<String, CrawlTask> tasks = new HashMap<>();
@@ -120,10 +120,10 @@ public class CrawlerService implements CrawlCompleteListener {
     public void onCrawlCompete(CrawlCompletedEvent event) {
         WebsiteProject websiteProject = WebMapper.mapToWebsiteProject(event.getCrawlData());
         websiteProjectRepository.save(websiteProject);
+        List<PageEntity> pageEntities = WebMapper.mapToPageEntities(event.getCrawlData().getCrawledPages().values().stream().toList(), websiteProject.getId());
+        pageRepository.saveAll(pageEntities);
         BrokenPagesReport brokenPagesReport = WebMapper.mapToBrokenPageReport(event.getCrawlData().getBrokenPages(), websiteProject.getId());
         brokenPagesReportRepository.save(brokenPagesReport);
-        CrawledPagesReport crawledPagesReport = WebMapper.mapToCrawledPagesReport(event.getCrawlData().getCrawledPages().values().stream().toList());
-        crawledPagesReportRepository.save(crawledPagesReport);
         log.info("Report for website {} has been successfully saved.", event.getCrawlData().getWebsite().getDomain());
     }
 }

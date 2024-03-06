@@ -8,8 +8,7 @@ import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.dto.report.BrokenPagesReportResponse;
 import com.experimental.webcrawler.model.BrokenPageEntity;
 import com.experimental.webcrawler.model.BrokenPagesReport;
-import com.experimental.webcrawler.model.CrawledPagesReport;
-import com.experimental.webcrawler.model.LinkEntity;
+import com.experimental.webcrawler.model.IncomingLink;
 import com.experimental.webcrawler.model.PageEntity;
 import com.experimental.webcrawler.model.WebsiteProject;
 
@@ -19,13 +18,6 @@ import java.util.stream.Collectors;
 
 public class WebMapper {
     private WebMapper() {}
-    
-    public static CrawledPagesReport mapToCrawledPagesReport(List<Page> pages) {
-        List<PageEntity> pageEntities = pages.stream().map(WebMapper::mapToPageEntity).collect(Collectors.toList());
-        CrawledPagesReport crawledPagesReport = new CrawledPagesReport();
-        crawledPagesReport.setPages(pageEntities);
-        return crawledPagesReport;
-    }
     
     public static BrokenPagesReport mapToBrokenPageReport(List<BrokenPage> brokenPages, String websiteProjectId) {
         List<BrokenPageEntity> brokenPageEntityList = brokenPages.stream()
@@ -60,23 +52,20 @@ public class WebMapper {
         return websiteProject;
     }
     
-    private static PageEntity mapToPageEntity(Page page) {
-        List<LinkEntity> incomingLinks = page.getIncomingLinks().stream()
-                .map(WebMapper::mapToLinkEntity).collect(Collectors.toList());
-        return PageEntity.builder()
-                .title(page.getTitle())
-                .description(page.getDescription())
-                .url(page.getUrl())
-                .robotsContent(page.getRobotsContent())
-                .incomingLinks(incomingLinks)
-                .build();
+    public static List<PageEntity> mapToPageEntities(List<Page> pages, String websiteProjectId) {
+        return pages.stream().map(p -> WebMapper.mapToPageEntity(p, websiteProjectId)).collect(Collectors.toList());
     }
     
-    private static LinkEntity mapToLinkEntity(Link link) {
-        LinkEntity linkEntity = new LinkEntity();
-        linkEntity.setUrl(link.getUrl());
-        linkEntity.setHrefText(link.getHrefText());
-        return linkEntity;
+    private static IncomingLink mapToLinkEntity(Link link) {
+        IncomingLink incomingLink = new IncomingLink();
+        incomingLink.setUrl(link.getUrl());
+        incomingLink.setHrefText(link.getHrefText());
+        return incomingLink;
+    }
+    
+    private static PageEntity mapToPageEntity(Page page, String webProjectId) {
+        List<IncomingLink> incomingLinks = page.getIncomingLinks().stream().map(WebMapper::mapToLinkEntity).collect(Collectors.toList());
+       return PageEntity.builder().url(page.getUrl()).title(page.getTitle()).incomingLinks(incomingLinks).webProjectId(webProjectId).build();
     }
     
     private static BrokenPageEntity mapToBrokenPageEntity(BrokenPage brokenPage) {

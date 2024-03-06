@@ -2,14 +2,14 @@ package com.experimental.webcrawler.crawler.model;
 
 import lombok.Getter;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class Page {
     @Getter
-    private final List<Link> incomingLinks = Collections.synchronizedList(new ArrayList<>());
+    private final Set<Link> incomingLinks = Collections.synchronizedSet(new HashSet<>());
     private String url;
     private String title;
     private String description;
