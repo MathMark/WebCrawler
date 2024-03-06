@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class Page {
+public class WebPage {
     @Getter
     private final Set<Link> incomingLinks = Collections.synchronizedSet(new HashSet<>());
     private String url;
@@ -72,7 +72,7 @@ public class Page {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Page page = (Page) o;
+        WebPage page = (WebPage) o;
         return Objects.equals(getUrl(), page.getUrl());
     }
 

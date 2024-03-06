@@ -1,6 +1,6 @@
 package com.experimental.webcrawler.controller;
 
-import com.experimental.webcrawler.model.WebsiteProject;
+import com.experimental.webcrawler.model.WebsiteProjectDocument;
 import com.experimental.webcrawler.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,14 +22,14 @@ public class ProjectController {
     private final ProjectService projectService;
     
     @GetMapping("/all")
-    public ResponseEntity<List<WebsiteProject>> getAllProjects() {
-        List<WebsiteProject> projects = projectService.getAllProjects();
+    public ResponseEntity<List<WebsiteProjectDocument>> getAllProjects() {
+        List<WebsiteProjectDocument> projects = projectService.getAllProjects();
         return ResponseEntity.ok(projects);
     }
     
     @GetMapping
-    public ResponseEntity<WebsiteProject> getById(@RequestParam String projectId) {
-        WebsiteProject project = projectService.getById(projectId);
+    public ResponseEntity<WebsiteProjectDocument> getById(@RequestParam String projectId) {
+        WebsiteProjectDocument project = projectService.getById(projectId);
         return ResponseEntity.ok(project);
     }
     

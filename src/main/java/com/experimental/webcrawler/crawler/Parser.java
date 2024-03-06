@@ -1,7 +1,7 @@
 package com.experimental.webcrawler.crawler;
 
-import com.experimental.webcrawler.crawler.model.Page;
+import com.experimental.webcrawler.crawler.model.WebPage;
 
 public interface Parser {
-    void parseLinks(Page page);
+    void parseLinks(WebPage webPage);
 }

@@ -4,7 +4,7 @@ import com.experimental.webcrawler.crawler.CompletableRunnable;
 import com.experimental.webcrawler.crawler.CrawlExecutor;
 import com.experimental.webcrawler.crawler.Parser;
 import com.experimental.webcrawler.crawler.ThreadCompleteListener;
-import com.experimental.webcrawler.crawler.model.Page;
+import com.experimental.webcrawler.crawler.model.WebPage;
 import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.service.CrawlCompleteListener;
 import com.experimental.webcrawler.service.event.CrawlCompletedEvent;
@@ -53,10 +53,10 @@ public class CrawlTask implements ThreadCompleteListener, CrawlExecutor {
 
     @Override
     public void crawl(int threadCount) {
-        Page pageToCrawl = new Page();
+        WebPage pageToCrawl = new WebPage();
         pageToCrawl.setUrl(this.crawlData.getWebsite().getStartUrl());
         parser.parseLinks(pageToCrawl);
-        List<Page> startLinks = crawlData.getInternalLinks().stream()
+        List<WebPage> startLinks = crawlData.getInternalLinks().stream()
                 .limit(threadCount)
                 .collect(Collectors.toList());
         if (startLinks.isEmpty()) {
@@ -69,7 +69,7 @@ public class CrawlTask implements ThreadCompleteListener, CrawlExecutor {
         executorService = executorServiceProvider.getObject(threadCount);
         log.info("Starting crawling website {} with {} threads", crawlData.getWebsite().getDomain(), threadCount);
 
-        for (Page startLink : startLinks) {
+        for (WebPage startLink : startLinks) {
             String id = UUID.randomUUID().toString();
             CompletableRunnable thread = new CrawlThread(id, startLink, this.crawlData, parser);
             thread.addThreadCompleteListener(this);

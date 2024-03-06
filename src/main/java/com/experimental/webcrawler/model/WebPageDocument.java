@@ -11,11 +11,11 @@ import java.util.List;
 @Setter
 @Builder
 @Document("pages")
-public class PageEntity {
+public class WebPageDocument {
     private String url;
     private String title;
     private String description;
     private String robotsContent;
     private String webProjectId;
-    private List<IncomingLink> incomingLinks;
+    private List<IncomingLinkDocument> incomingLinkDocuments;
 }

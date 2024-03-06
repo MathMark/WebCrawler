@@ -9,9 +9,9 @@ import com.experimental.webcrawler.dto.crawl.CrawlStatus;
 import com.experimental.webcrawler.exception.TaskNotFoundException;
 import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.mapper.WebMapper;
-import com.experimental.webcrawler.model.BrokenPagesReport;
-import com.experimental.webcrawler.model.PageEntity;
-import com.experimental.webcrawler.model.WebsiteProject;
+import com.experimental.webcrawler.model.BrokenPagesDocument;
+import com.experimental.webcrawler.model.WebPageDocument;
+import com.experimental.webcrawler.model.WebsiteProjectDocument;
 import com.experimental.webcrawler.repository.BrokenPagesReportRepository;
 
 import com.experimental.webcrawler.repository.PageRepository;
@@ -93,7 +93,7 @@ public class CrawlerService implements CrawlCompleteListener {
                 .domain(website.getDomain())
                 .crawledPages(crawlData.getCrawledPages().size())
                 .remainedPages(crawlData.getInternalLinks().size())
-                .brokenPagesCount(crawlData.getBrokenPages().size())
+                .brokenPagesCount(crawlData.getBrokenWebPages().size())
                 .status(task.getStatus())
                 .build();
     }
@@ -118,12 +118,12 @@ public class CrawlerService implements CrawlCompleteListener {
 
     @Override
     public void onCrawlCompete(CrawlCompletedEvent event) {
-        WebsiteProject websiteProject = WebMapper.mapToWebsiteProject(event.getCrawlData());
-        websiteProjectRepository.save(websiteProject);
-        List<PageEntity> pageEntities = WebMapper.mapToPageEntities(event.getCrawlData().getCrawledPages().values().stream().toList(), websiteProject.getId());
+        WebsiteProjectDocument websiteProjectDocument = WebMapper.mapToWebsiteProject(event.getCrawlData());
+        websiteProjectRepository.save(websiteProjectDocument);
+        List<WebPageDocument> pageEntities = WebMapper.mapToPageEntities(event.getCrawlData().getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
         pageRepository.saveAll(pageEntities);
-        BrokenPagesReport brokenPagesReport = WebMapper.mapToBrokenPageReport(event.getCrawlData().getBrokenPages(), websiteProject.getId());
-        brokenPagesReportRepository.save(brokenPagesReport);
+        BrokenPagesDocument brokenPagesDocument = WebMapper.mapToBrokenPageReport(event.getCrawlData().getBrokenWebPages(), websiteProjectDocument.getId());
+        brokenPagesReportRepository.save(brokenPagesDocument);
         log.info("Report for website {} has been successfully saved.", event.getCrawlData().getWebsite().getDomain());
     }
 }

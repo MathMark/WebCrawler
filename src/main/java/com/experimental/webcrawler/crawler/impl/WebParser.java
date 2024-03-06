@@ -1,9 +1,9 @@
 package com.experimental.webcrawler.crawler.impl;
 
 import com.experimental.webcrawler.crawler.Parser;
-import com.experimental.webcrawler.crawler.model.BrokenPage;
+import com.experimental.webcrawler.crawler.model.BrokenWebPage;
 import com.experimental.webcrawler.crawler.model.Link;
-import com.experimental.webcrawler.crawler.model.Page;
+import com.experimental.webcrawler.crawler.model.WebPage;
 import com.experimental.webcrawler.crawler.model.CrawlData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.URI;
@@ -38,25 +37,25 @@ public class WebParser implements Parser {
     private final CrawlData crawlData;
 
     @Override
-    public void parseLinks(Page page) {
-        log.info("Scanning internal page {}", page.getUrl());
-        HttpResponse<String> httpResponse = connect(page);
+    public void parseLinks(WebPage webPage) {
+        log.info("Scanning internal page {}", webPage.getUrl());
+        HttpResponse<String> httpResponse = connect(webPage);
         if (httpResponse != null && isHtml(httpResponse)) {
             HttpStatus httpStatus = HttpStatus.resolve(httpResponse.statusCode());
             if (isBroken(httpStatus)) {
-                BrokenPage brokenPage = BrokenPage.builder()
-                        .page(page)
+                BrokenWebPage brokenWebPage = BrokenWebPage.builder()
+                        .webPage(webPage)
                         .statusCode(httpResponse.statusCode())
                         .build();
-                crawlData.getBrokenPages().add(brokenPage);
+                crawlData.getBrokenWebPages().add(brokenWebPage);
             }
             String htmlBody = httpResponse.body();
             if (htmlBody != null && !htmlBody.isEmpty()) {
                 Document doc = Jsoup.parse(htmlBody);
-                parseContent(doc, page);
+                parseContent(doc, webPage);
                 Elements links = doc.select(A_TAG);
                 for (Element link : links) {
-                    parseLink(page.getUrl(), link);
+                    parseLink(webPage.getUrl(), link);
                 }
             }
         }
@@ -66,36 +65,36 @@ public class WebParser implements Parser {
         String hrefUrl = parseIfRelated(nextPage.attr(HREF_ATTRIBUTE));
 
         if (!hrefUrl.contains(ANCHOR_LINK) && !hrefUrl.contains(GET_PARAM)) {
-            Page page = new Page();
-            page.setUrl(hrefUrl);
+            WebPage webPage = new WebPage();
+            webPage.setUrl(hrefUrl);
 
             if (hrefUrl.startsWith(crawlData.getWebsite().getDomain())) {
                 Link incomingLink = new Link();
                 incomingLink.setUrl(currentUrl);
                 incomingLink.setHrefText(nextPage.text());
-                Page existingPage = crawlData.getCrawledPages().get(hrefUrl);
-                if (existingPage == null) {
-                    page.getIncomingLinks().add(incomingLink);
-                    crawlData.getCrawledPages().put(hrefUrl, page);
-                    crawlData.getInternalLinks().add(page);
+                WebPage existingWebPage = crawlData.getCrawledPages().get(hrefUrl);
+                if (existingWebPage == null) {
+                    webPage.getIncomingLinks().add(incomingLink);
+                    crawlData.getCrawledPages().put(hrefUrl, webPage);
+                    crawlData.getInternalLinks().add(webPage);
                 } else {
-                    existingPage.getIncomingLinks().add(incomingLink);
+                    existingWebPage.getIncomingLinks().add(incomingLink);
                 }
             } else {
-                crawlData.getExternalLinks().add(page);
+                crawlData.getExternalLinks().add(webPage);
             }
         }
     }
 
-    private HttpResponse<String> connect(Page page) {
+    private HttpResponse<String> connect(WebPage webPage) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(page.getUrl()))
+                    .uri(new URI(webPage.getUrl()))
                     .GET()
                     .build();
             return this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (URISyntaxException | IOException e) {
-            log.warn("Incorrect URI syntax {}", page.getUrl(), e);
+            log.warn("Incorrect URI syntax {}", webPage.getUrl(), e);
         } catch (InterruptedException e) {
             log.warn("HTTP request has been interrupted.");
             Thread.currentThread().interrupt();
@@ -104,8 +103,8 @@ public class WebParser implements Parser {
     }
 
 
-    private void parseContent(Document document, Page page) {
-        page.setTitle(document.title());
+    private void parseContent(Document document, WebPage webPage) {
+        webPage.setTitle(document.title());
     }
 
     private String parseIfRelated(String url) {

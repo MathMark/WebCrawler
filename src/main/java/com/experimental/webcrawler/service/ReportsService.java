@@ -5,7 +5,7 @@ import com.experimental.webcrawler.dto.report.ReportDto;
 import com.experimental.webcrawler.dto.report.ReportsDto;
 import com.experimental.webcrawler.exception.ReportNotFoundException;
 import com.experimental.webcrawler.mapper.WebMapper;
-import com.experimental.webcrawler.model.BrokenPagesReport;
+import com.experimental.webcrawler.model.BrokenPagesDocument;
 import com.experimental.webcrawler.repository.BrokenPagesReportRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ public class ReportsService {
     
     public ReportsDto getAllReports(String websiteProjectId) {
         ReportsDto reportsDto = new ReportsDto();
-        Optional<BrokenPagesReport> brokenPagesReportOptional = brokenPagesReportRepository.findByWebsiteProjectId(websiteProjectId);
+        Optional<BrokenPagesDocument> brokenPagesReportOptional = brokenPagesReportRepository.findByWebsiteProjectId(websiteProjectId);
         brokenPagesReportOptional.ifPresent(brokenPagesReport -> {
             ReportDto report = new ReportDto();
             report.setReportId(brokenPagesReport.getId());
@@ -33,8 +33,8 @@ public class ReportsService {
     }
     
     public List<BrokenPagesReportResponse> getBrokenPagesReport(String reportId) {
-        Optional<BrokenPagesReport> brokenPagesReportOptional = brokenPagesReportRepository.findById(reportId);
-        BrokenPagesReport brokenPagesReport = brokenPagesReportOptional.orElseThrow(() -> new ReportNotFoundException(""));
-        return WebMapper.mapToBrokenPagesReportResponse(brokenPagesReport);
+        Optional<BrokenPagesDocument> brokenPagesReportOptional = brokenPagesReportRepository.findById(reportId);
+        BrokenPagesDocument brokenPagesDocument = brokenPagesReportOptional.orElseThrow(() -> new ReportNotFoundException(""));
+        return WebMapper.mapToBrokenPagesReportResponse(brokenPagesDocument);
     }
 }

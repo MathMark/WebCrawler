@@ -4,7 +4,7 @@ import com.experimental.webcrawler.crawler.CompletableRunnable;
 import com.experimental.webcrawler.crawler.Parser;
 import com.experimental.webcrawler.crawler.ThreadCompleteListener;
 import com.experimental.webcrawler.crawler.model.CrawlData;
-import com.experimental.webcrawler.crawler.model.Page;
+import com.experimental.webcrawler.crawler.model.WebPage;
 import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CrawlThread implements CompletableRunnable {
     
     private final String id;
-    private final Page startPage;
+    private final WebPage startPage;
     private final CrawlData crawlData;
     private final AtomicBoolean isRequestedToStop = new AtomicBoolean();
     private final List<ThreadCompleteListener> listeners = new ArrayList<>();

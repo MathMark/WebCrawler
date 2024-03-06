@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Builder
-public class BrokenPage {
-    private Page page;
+public class BrokenWebPage {
+    private WebPage webPage;
     private int statusCode;
 }

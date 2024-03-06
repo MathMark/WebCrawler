@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Setter
 @Document("incomingLinks")
-public class IncomingLink {
+public class IncomingLinkDocument {
     private String url;
     private String hrefText;
 }

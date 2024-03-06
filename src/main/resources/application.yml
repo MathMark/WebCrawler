@@ -6,4 +6,4 @@ spring:
     name: webcrawler
   data:
     mongodb:
-      uri: "mongodb://mongodb:27017/websites"
+      uri: "mongodb://localhost:27017/websites"
