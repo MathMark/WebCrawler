@@ -1,8 +1,11 @@
-package com.experimental.webcrawler.crawler;
+package com.experimental.webcrawler.crawler.impl;
 
+import com.experimental.webcrawler.crawler.CompletableRunnable;
+import com.experimental.webcrawler.crawler.CrawlExecutor;
+import com.experimental.webcrawler.crawler.Parser;
+import com.experimental.webcrawler.crawler.ThreadCompleteListener;
 import com.experimental.webcrawler.crawler.model.Page;
 import com.experimental.webcrawler.crawler.model.CrawlData;
-import com.experimental.webcrawler.parser.WebParser;
 import com.experimental.webcrawler.service.CrawlCompleteListener;
 import com.experimental.webcrawler.service.event.CrawlCompletedEvent;
 import lombok.Getter;
@@ -13,45 +16,45 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CrawlTask implements ThreadCompleteListener {
-    
+public class CrawlTask implements ThreadCompleteListener, CrawlExecutor {
+
     @Autowired
     private ObjectProvider<ExecutorService> executorServiceProvider;
     @Getter
     private final CrawlData crawlData;
-    private final WebParser parser;
+    private final Parser parser;
     private ExecutorService executorService;
     private Status status;
-    
+
     private final Map<String, CompletableRunnable> threads = new ConcurrentHashMap<>();
     private final List<CrawlCompleteListener> listeners = new ArrayList<>();
-    
+
 
     public void addListener(CrawlCompleteListener listener) {
         listeners.add(listener);
     }
+
     public void removeListener(CrawlCompleteListener listener) {
         listeners.remove(listener);
     }
-    
+
     public Status getStatus() {
         return this.status;
     }
-    
 
+
+    @Override
     public void crawl(int threadCount) {
         Page pageToCrawl = new Page();
-        pageToCrawl.setCurrentUrl(this.crawlData.getWebsite().getStartUrl());
+        pageToCrawl.setUrl(this.crawlData.getWebsite().getStartUrl());
         parser.parseLinks(pageToCrawl);
         List<Page> startLinks = crawlData.getInternalLinks().stream()
                 .limit(threadCount)
@@ -68,18 +71,16 @@ public class CrawlTask implements ThreadCompleteListener {
 
         for (Page startLink : startLinks) {
             String id = UUID.randomUUID().toString();
-            CompletableRunnable thread = new CrawlingThread(id, startLink,
-                    this.crawlData,
-                    this.crawlData.getScannedPages(),
-                    parser);
+            CompletableRunnable thread = new CrawlThread(id, startLink, this.crawlData, parser);
             thread.addThreadCompleteListener(this);
             threads.put(id, thread);
             executorService.execute(thread);
         }
-        
+
         status = Status.RUNNING;
     }
 
+    @Override
     public void shutDown() {
         log.info("Crawling requested to stop.");
         for (Map.Entry<String, CompletableRunnable> entry : threads.entrySet()) {
@@ -106,62 +107,7 @@ public class CrawlTask implements ThreadCompleteListener {
             listener.onCrawlCompete(event);
         }
     }
-
-    @RequiredArgsConstructor
-    public static class CrawlingThread implements CompletableRunnable {
-
-        private final String id;
-        private final Page startPage;
-        private final CrawlData crawlData;
-        private final Set<Page> scannedPages;
-        private final AtomicBoolean isRequestedToStop = new AtomicBoolean();
-        private final List<ThreadCompleteListener> listeners = new ArrayList<>();
-        private final WebParser parser;
-
-        public void scan(Page page) {
-            if (!scannedPages.contains(page)) {
-                log.info("Scanning internal page {}", page.getCurrentUrl());
-                parser.parseLinks(page);
-                scannedPages.add(page);
-            }
-        }
-
-        public synchronized void stop() {
-            isRequestedToStop.set(true);
-        }
-
-        @Override
-        public void addThreadCompleteListener(ThreadCompleteListener listener) {
-            listeners.add(listener);
-        }
-
-        @Override
-        public void removeThreadCompleteListener(ThreadCompleteListener listener) {
-            listeners.remove(listener);
-        }
-
-        private void notifyListeners() {
-            for (ThreadCompleteListener listener : listeners) {
-                listener.onThreadComplete(this.id);
-            }
-        }
-
-        private boolean isStopped() {
-            return this.crawlData.getInternalLinks().isEmpty() ||
-                    Thread.currentThread().isInterrupted()
-                    || isRequestedToStop.get();
-        }
-
-        @Override
-        public void run() {
-            isRequestedToStop.set(false);
-            scan(this.startPage);
-            while (!isStopped()) {
-                scan(this.crawlData.getInternalLinks().poll());
-            }
-            notifyListeners();
-        }
-    }
+    
 
     public enum Status {
         RUNNING,

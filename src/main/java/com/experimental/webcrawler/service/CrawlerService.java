@@ -1,6 +1,6 @@
 package com.experimental.webcrawler.service;
 
-import com.experimental.webcrawler.crawler.CrawlTask;
+import com.experimental.webcrawler.crawler.impl.CrawlTask;
 import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.dto.crawl.BasicCrawlStatus;
 import com.experimental.webcrawler.dto.crawl.CrawlRequest;
@@ -91,7 +91,7 @@ public class CrawlerService implements CrawlCompleteListener {
          return CrawlStatus.builder()
                 .projectName(website.getProjectName())
                 .domain(website.getDomain())
-                .crawledPages(crawlData.getScannedPages().size())
+                .crawledPages(crawlData.getCrawledPages().size())
                 .remainedPages(crawlData.getInternalLinks().size())
                 .brokenPagesCount(crawlData.getBrokenPages().size())
                 .status(task.getStatus())
@@ -122,7 +122,7 @@ public class CrawlerService implements CrawlCompleteListener {
         websiteProjectRepository.save(websiteProject);
         BrokenPagesReport brokenPagesReport = WebMapper.mapToBrokenPageReport(event.getCrawlData().getBrokenPages(), websiteProject.getId());
         brokenPagesReportRepository.save(brokenPagesReport);
-        CrawledPagesReport crawledPagesReport = WebMapper.mapToCrawledPagesReport(event.getCrawlData().getScannedPages().stream().toList());
+        CrawledPagesReport crawledPagesReport = WebMapper.mapToCrawledPagesReport(event.getCrawlData().getCrawledPages().values().stream().toList());
         crawledPagesReportRepository.save(crawledPagesReport);
         log.info("Report for website {} has been successfully saved.", event.getCrawlData().getWebsite().getDomain());
     }

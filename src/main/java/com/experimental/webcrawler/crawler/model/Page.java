@@ -1,49 +1,34 @@
 package com.experimental.webcrawler.crawler.model;
 
+import lombok.Getter;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class Page {
-    private String previousUrl;
-    private String currentUrl;
-    private String hrefText;
+    @Getter
+    private final List<Link> incomingLinks = Collections.synchronizedList(new ArrayList<>());
+    private String url;
     private String title;
     private String description;
     private String robotsContent;
     
-    private final Object previousUrlMonitor = new Object();
     private final Object currentUrlMonitor = new Object();
-    private final Object hrefTextMonitor  = new Object();
     private final Object titleMonitor = new Object();
     private final Object descriptionMonitor = new Object();
     private final Object robotsContentMonitor = new Object();
-
-    public String getPreviousUrl() {
-        synchronized (previousUrlMonitor) {
-            return previousUrl;
-        }
-    }
-
-    public void setPreviousUrl(String previousUrl) {
-        synchronized (previousUrlMonitor) {
-            this.previousUrl = previousUrl;
-        }
-    }
-
-    public String getCurrentUrl() {
+    
+    public String getUrl() {
         synchronized (currentUrlMonitor) {
-            return currentUrl;
+            return url;
         }
     }
 
-    public void setCurrentUrl(String currentUrl) {
+    public void setUrl(String url) {
         synchronized (currentUrlMonitor) {
-            this.currentUrl = currentUrl;
-        }
-    }
-
-    public String getHrefText() {
-        synchronized (hrefTextMonitor) {
-             return hrefText;
+            this.url = url;
         }
     }
 
@@ -83,21 +68,16 @@ public class Page {
         }
     }
 
-    public void setHrefText(String hrefText) {
-        this.hrefText = hrefText;
-    }
-
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Page page = (Page) o;
-        return Objects.equals(getCurrentUrl(), page.getCurrentUrl());
+        return Objects.equals(getUrl(), page.getUrl());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getCurrentUrl());
+        return Objects.hash(getUrl());
     }
 }

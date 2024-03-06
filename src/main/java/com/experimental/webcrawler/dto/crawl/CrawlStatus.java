@@ -1,6 +1,6 @@
 package com.experimental.webcrawler.dto.crawl;
 
-import com.experimental.webcrawler.crawler.CrawlTask;
+import com.experimental.webcrawler.crawler.impl.CrawlTask;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
