@@ -1,7 +1,7 @@
 package com.experimental.webcrawler.service;
 
-import com.experimental.webcrawler.crawler.model.Website;
+import com.experimental.webcrawler.service.event.CrawlCompletedEvent;
 
 public interface CrawlCompleteListener {
-    void onCrawlCompete(Website website);
+    void onCrawlCompete(CrawlCompletedEvent event);
 }

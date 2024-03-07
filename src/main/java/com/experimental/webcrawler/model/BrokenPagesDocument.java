@@ -13,7 +13,7 @@ import java.util.List;
 @Getter
 @Setter
 @Document("brokenPagesReport")
-public class BrokenPagesReport {
+public class BrokenPagesDocument {
     private String id;
     private List<BrokenPageEntity> brokenPages;
     private String websiteProjectId;

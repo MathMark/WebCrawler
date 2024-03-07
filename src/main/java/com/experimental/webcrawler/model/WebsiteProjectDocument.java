@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Setter
 @Document(value = "websiteReport")
-public class WebsiteProject {
+public class WebsiteProjectDocument {
     @Id
     private String id;
     private String name;

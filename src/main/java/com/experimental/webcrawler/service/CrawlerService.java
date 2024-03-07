@@ -1,40 +1,60 @@
 package com.experimental.webcrawler.service;
 
-import com.experimental.webcrawler.crawler.CrawlTask;
-import com.experimental.webcrawler.dto.CrawlRequest;
-import com.experimental.webcrawler.dto.CrawlResponse;
-import com.experimental.webcrawler.dto.CrawlStatus;
-import com.experimental.webcrawler.exception.TaskNotFoundException;
+import com.experimental.webcrawler.crawler.impl.CrawlTask;
 import com.experimental.webcrawler.crawler.model.Website;
+import com.experimental.webcrawler.dto.crawl.BasicCrawlStatus;
+import com.experimental.webcrawler.dto.crawl.CrawlRequest;
+import com.experimental.webcrawler.dto.crawl.CrawlResponse;
+import com.experimental.webcrawler.dto.crawl.CrawlStatus;
+import com.experimental.webcrawler.exception.TaskNotFoundException;
+import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.mapper.WebMapper;
-import com.experimental.webcrawler.model.BrokenPagesReport;
-import com.experimental.webcrawler.model.WebsiteProject;
+import com.experimental.webcrawler.model.BrokenPagesDocument;
+import com.experimental.webcrawler.model.WebPageDocument;
+import com.experimental.webcrawler.model.WebsiteProjectDocument;
 import com.experimental.webcrawler.repository.BrokenPagesReportRepository;
-import com.experimental.webcrawler.repository.WebsiteProjectRepository;
+
+import com.experimental.webcrawler.repository.PageRepository;
+import com.experimental.webcrawler.repository.ProjectRepository;
+import com.experimental.webcrawler.service.event.CrawlCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CrawlerService implements CrawlCompleteListener {
     
-    private final WebsiteProjectRepository websiteProjectRepository;
+    private final ObjectProvider<CrawlTask> objectProvider;
+    private final ProjectRepository websiteProjectRepository;
     private final BrokenPagesReportRepository brokenPagesReportRepository;
+    private final PageRepository pageRepository;
     
     private static final Pattern pattern = Pattern.compile("^(https?://[^/]+)");
     private final Map<String, CrawlTask> tasks = new HashMap<>();
     
+    public List<BasicCrawlStatus> getAllTasks() {
+        return tasks.entrySet().stream().map(e -> BasicCrawlStatus.builder().taskId(e.getKey())
+                .projectName(e.getValue().getCrawlData().getWebsite().getProjectName())
+                .domain(e.getValue().getCrawlData().getWebsite().getDomain())
+                .status(e.getValue().getStatus()).build()).collect(Collectors.toList());
+    }
+    
     public CrawlResponse startCrawling(CrawlRequest crawlRequest) {
         Website website = generateWebsiteProject(crawlRequest);
-        CrawlTask crawlTask = new CrawlTask(website);
+        String dataId = UUID.randomUUID().toString();
+        CrawlData data = new CrawlData(dataId, website);
+        CrawlTask crawlTask = objectProvider.getObject(data);
         crawlTask.addListener(this);
         crawlTask.crawl(crawlRequest.getThreadsCount());
         String taskId = UUID.randomUUID().toString();
@@ -43,7 +63,7 @@ public class CrawlerService implements CrawlCompleteListener {
                 .initialUrl(crawlRequest.getStartUrl())
                 .domain(website.getDomain())
                 .taskId(taskId)
-                .websiteProjectId(website.getId())
+                .websiteProjectId(dataId)
                 .projectName(website.getProjectName())
                 .build();
     }
@@ -53,12 +73,7 @@ public class CrawlerService implements CrawlCompleteListener {
         if (crawlTask == null) {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
         }
-        CrawlStatus crawlStatus = new CrawlStatus();
-        crawlStatus.setCrawledPages(crawlTask.getCrawledPagesCount());
-        crawlStatus.setRemainedPages(crawlTask.getRemainedPagesCount());
-        crawlStatus.setBrokenPagesCount(crawlTask.getBrokenLinksCount());
-        crawlStatus.setStatus(crawlTask.getStatus());
-        return crawlStatus;
+        return createCrawlStatus(crawlTask);
     }
     
     public CrawlStatus stopCrawling(String taskId) {
@@ -67,11 +82,19 @@ public class CrawlerService implements CrawlCompleteListener {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
         }
         crawlTask.shutDown();
-        return CrawlStatus.builder()
-                .crawledPages(crawlTask.getCrawledPagesCount())
-                .remainedPages(crawlTask.getRemainedPagesCount())
-                .brokenPagesCount(crawlTask.getBrokenLinksCount())
-                .status(crawlTask.getStatus())
+        return createCrawlStatus(crawlTask);
+    }
+    
+    private CrawlStatus createCrawlStatus(CrawlTask task) {
+        CrawlData crawlData = task.getCrawlData();
+        Website website = crawlData.getWebsite();
+         return CrawlStatus.builder()
+                .projectName(website.getProjectName())
+                .domain(website.getDomain())
+                .crawledPages(crawlData.getCrawledPages().size())
+                .remainedPages(crawlData.getInternalLinks().size())
+                .brokenPagesCount(crawlData.getBrokenWebPages().size())
+                .status(task.getStatus())
                 .build();
     }
     
@@ -82,10 +105,7 @@ public class CrawlerService implements CrawlCompleteListener {
         if (projectName == null || "".equals(projectName)) {
             projectName = domain;
         }
-        String projectId = UUID.randomUUID().toString();
-        Website website = new Website(projectId, url, domain);
-        website.setProjectName(projectName);
-        return website;
+        return new Website(projectName, url, domain);
     }
     
     private String cutDomain(String url) {
@@ -97,11 +117,13 @@ public class CrawlerService implements CrawlCompleteListener {
     }
 
     @Override
-    public void onCrawlCompete(Website website) {
-        WebsiteProject websiteProject = WebMapper.mapToWebsiteProject(website);
-        websiteProjectRepository.save(websiteProject);
-        BrokenPagesReport brokenPagesReport = WebMapper.mapToBrokenPageReport(website.getBrokenPages(), websiteProject.getId());
-        brokenPagesReportRepository.save(brokenPagesReport);
-        log.info("Report for website {} has been successfully saved.", website.getDomain());
+    public void onCrawlCompete(CrawlCompletedEvent event) {
+        WebsiteProjectDocument websiteProjectDocument = WebMapper.mapToWebsiteProject(event.getCrawlData());
+        websiteProjectRepository.save(websiteProjectDocument);
+        List<WebPageDocument> pageEntities = WebMapper.mapToPageEntities(event.getCrawlData().getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
+        pageRepository.saveAll(pageEntities);
+        BrokenPagesDocument brokenPagesDocument = WebMapper.mapToBrokenPageReport(event.getCrawlData().getBrokenWebPages(), websiteProjectDocument.getId());
+        brokenPagesReportRepository.save(brokenPagesDocument);
+        log.info("Report for website {} has been successfully saved.", event.getCrawlData().getWebsite().getDomain());
     }
 }

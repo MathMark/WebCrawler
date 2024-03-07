@@ -1,4 +1,4 @@
-package com.experimental.webcrawler.dto;
+package com.experimental.webcrawler.dto.error;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

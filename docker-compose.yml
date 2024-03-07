@@ -1,0 +1,25 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    networks:
+    - servicenetwork
+
+  webcrawler:
+    image: "webcrawler"
+    container_name: webcrawler
+    ports:
+      - "8294:8294"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+    networks:
+      - servicenetwork
+   
+networks:
+  servicenetwork:
+    driver: bridge
