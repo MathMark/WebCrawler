@@ -1,9 +1,13 @@
 package com.experimental.webcrawler.config;
 
+import com.experimental.webcrawler.crawler.ContentParser;
+import com.experimental.webcrawler.crawler.CrawlClient;
 import com.experimental.webcrawler.crawler.Parser;
+import com.experimental.webcrawler.crawler.impl.CrawlClientImpl;
 import com.experimental.webcrawler.crawler.impl.CrawlTask;
+import com.experimental.webcrawler.crawler.impl.ContentParserImpl;
 import com.experimental.webcrawler.crawler.model.CrawlData;
-import com.experimental.webcrawler.crawler.impl.WebParser;
+import com.experimental.webcrawler.crawler.impl.LinkParser;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,15 +26,25 @@ public class AppConfig {
     }
     
     @Bean
+    public CrawlClient crawlClientImpl() {
+        return new CrawlClientImpl(httpClient());
+    }
+    
+    @Bean
+    public ContentParser contentParserImpl() {
+        return new ContentParserImpl();
+    }
+    
+    @Bean
     @Scope(BeanDefinition.SCOPE_PROTOTYPE)
     public Parser webParser(CrawlData crawlData) {
-        return new WebParser(httpClient(), crawlData);
+        return new LinkParser(crawlData);
     }
     
     @Bean
     @Scope(BeanDefinition.SCOPE_PROTOTYPE)
     public CrawlTask crawlTask(CrawlData crawlData) {
-        return new CrawlTask(crawlData, webParser(crawlData));
+        return new CrawlTask(crawlData, webParser(crawlData), contentParserImpl(), crawlClientImpl());
     }
     
     @Bean

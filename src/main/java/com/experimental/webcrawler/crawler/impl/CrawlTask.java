@@ -1,9 +1,12 @@
 package com.experimental.webcrawler.crawler.impl;
 
 import com.experimental.webcrawler.crawler.CompletableRunnable;
+import com.experimental.webcrawler.crawler.ContentParser;
+import com.experimental.webcrawler.crawler.CrawlClient;
 import com.experimental.webcrawler.crawler.CrawlExecutor;
 import com.experimental.webcrawler.crawler.Parser;
 import com.experimental.webcrawler.crawler.ThreadCompleteListener;
+import com.experimental.webcrawler.crawler.model.ConnectionResponse;
 import com.experimental.webcrawler.crawler.model.WebPage;
 import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.service.CrawlCompleteListener;
@@ -31,7 +34,9 @@ public class CrawlTask implements ThreadCompleteListener, CrawlExecutor {
     @Getter
     private final CrawlData crawlData;
     private final Parser parser;
+    private final ContentParser contentParser;
     private ExecutorService executorService;
+    private final CrawlClient crawlClient;
     private Status status;
 
     private final Map<String, CompletableRunnable> threads = new ConcurrentHashMap<>();
@@ -54,8 +59,10 @@ public class CrawlTask implements ThreadCompleteListener, CrawlExecutor {
     @Override
     public void crawl(int threadCount) {
         WebPage pageToCrawl = new WebPage();
-        pageToCrawl.setUrl(this.crawlData.getWebsite().getStartUrl());
-        parser.parseLinks(pageToCrawl);
+        String startUrl = this.crawlData.getWebsite().getStartUrl();
+        pageToCrawl.setUrl(startUrl);
+        ConnectionResponse connectionResponse = crawlClient.connect(startUrl);
+        parser.parseLinks(pageToCrawl, connectionResponse);
         List<WebPage> startLinks = crawlData.getInternalLinks().stream()
                 .limit(threadCount)
                 .collect(Collectors.toList());
@@ -71,7 +78,7 @@ public class CrawlTask implements ThreadCompleteListener, CrawlExecutor {
 
         for (WebPage startLink : startLinks) {
             String id = UUID.randomUUID().toString();
-            CompletableRunnable thread = new CrawlThread(id, startLink, this.crawlData, parser);
+            CompletableRunnable thread = new CrawlThread(id, startLink, this.crawlData, parser, contentParser, crawlClient);
             thread.addThreadCompleteListener(this);
             threads.put(id, thread);
             executorService.execute(thread);
