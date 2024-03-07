@@ -7,11 +7,13 @@ import com.experimental.webcrawler.crawler.Parser;
 import com.experimental.webcrawler.crawler.ThreadCompleteListener;
 import com.experimental.webcrawler.crawler.model.BrokenWebPage;
 import com.experimental.webcrawler.crawler.model.ConnectionResponse;
+import com.experimental.webcrawler.crawler.model.Content;
 import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.crawler.model.WebPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,6 +29,7 @@ public class CrawlThread implements CompletableRunnable {
     private final Parser parser;
     private final ContentParser contentParser;
     private final CrawlClient crawlClient;
+    //TODO: Use separate http client for each thread!!!
 
     public synchronized void stop() {
         isRequestedToStop.set(true);
@@ -72,11 +75,11 @@ public class CrawlThread implements CompletableRunnable {
                         .statusCode(connectionResponse.getHttpStatus().value())
                         .build();
                 crawlData.getBrokenWebPages().add(brokenWebPage);
-            } else {
+            } else  {
                 parser.parseLinks(webPage, connectionResponse);
-            }
-            
-            //contentParser.parseContent()
+                Content content = contentParser.parseContent(connectionResponse.getHtmlBody());
+                webPage.setContent(content);
+            } 
         }
         notifyListeners();
     }

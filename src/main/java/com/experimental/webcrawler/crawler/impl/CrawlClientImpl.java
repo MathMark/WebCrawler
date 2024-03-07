@@ -28,11 +28,25 @@ public class CrawlClientImpl implements CrawlClient {
         java.net.http.HttpResponse<String> httpResponse = connectTo(uri);
         if (httpResponse != null) {
             connectionResponse.setHttpStatus(HttpStatus.resolve(httpResponse.statusCode()));
-            connectionResponse.setHtmlBody(httpResponse.body());
             List<ConnectionResponse.ContentType> contentTypes = parseContentTypes(httpResponse);
             connectionResponse.setContentType(contentTypes);
+            if (isHtml(contentTypes)) {
+                if (httpResponse.body() != null && !"".equals(httpResponse.body())) {
+                    connectionResponse.setHasHtmlSource(true);
+                    connectionResponse.setHtmlBody(httpResponse.body());
+                }
+            } else {
+                connectionResponse.setHasHtmlSource(false);
+            }
         }
         return connectionResponse;
+    }
+
+    private boolean isHtml(List<ConnectionResponse.ContentType> contentTypeList) {
+        if (contentTypeList == null || contentTypeList.isEmpty()) {
+            return false;
+        }
+        return contentTypeList.stream().anyMatch(ct -> ct == ConnectionResponse.ContentType.TEXT_HTML);
     }
     
     private java.net.http.HttpResponse<String> connectTo(String uri) {

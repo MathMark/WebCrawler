@@ -13,9 +13,7 @@ import java.util.List;
 @Document("pages")
 public class WebPageDocument {
     private String url;
-    private String title;
-    private String description;
-    private String robotsContent;
+    private ContentEntity content;
     private String webProjectId;
     private List<IncomingLinkDocument> incomingLinkDocuments;
 }

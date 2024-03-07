@@ -13,6 +13,7 @@ public class ConnectionResponse {
     private String htmlBody;
     private HttpStatus httpStatus;
     private List<ContentType> contentType;
+    private boolean hasHtmlSource;
     
     public enum ContentType {
         APPLICATION_JSON("application/json"),

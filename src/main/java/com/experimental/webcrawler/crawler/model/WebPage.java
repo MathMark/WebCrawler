@@ -11,14 +11,10 @@ public class WebPage {
     @Getter
     private final Set<Link> incomingLinks = Collections.synchronizedSet(new HashSet<>());
     private String url;
-    private String title;
-    private String description;
-    private String robotsContent;
+    private Content content;
     
     private final Object currentUrlMonitor = new Object();
-    private final Object titleMonitor = new Object();
-    private final Object descriptionMonitor = new Object();
-    private final Object robotsContentMonitor = new Object();
+    private final Object contentMonitor = new Object();
     
     public String getUrl() {
         synchronized (currentUrlMonitor) {
@@ -32,39 +28,15 @@ public class WebPage {
         }
     }
 
-    public String getTitle() {
-        synchronized (titleMonitor) {
-            return title;
+    public Content getContent() {
+        synchronized (contentMonitor) {
+            return content;
         }
     }
 
-    public void setTitle(String title) {
-        synchronized (titleMonitor) {
-            this.title = title;
-        }
-    }
-
-    public String getDescription() {
-        synchronized (descriptionMonitor) {
-            return description;
-        }
-    }
-
-    public void setDescription(String description) {
-        synchronized (descriptionMonitor) {
-            this.description = description;
-        }
-    }
-
-    public String getRobotsContent() {
-        synchronized (robotsContentMonitor) {
-            return robotsContent;
-        }
-    }
-
-    public void setRobotsContent(String robotsContent) {
-        synchronized (robotsContentMonitor) {
-            this.robotsContent = robotsContent;
+    public void setContent(Content content) {
+        synchronized (contentMonitor) {
+            this.content = content;
         }
     }
 
