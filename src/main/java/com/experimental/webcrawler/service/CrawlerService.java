@@ -21,10 +21,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Map;
@@ -34,29 +35,32 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class CrawlerService implements CrawlCompleteListener {
-    
+
     private final ObjectProvider<CrawlTask> objectProvider;
     private final ProjectRepository websiteProjectRepository;
     private final BrokenPagesReportRepository brokenPagesReportRepository;
     private final PageRepository pageRepository;
+    private final ExecutorService executorService = Executors.newFixedThreadPool(2);
     
     private static final Pattern pattern = Pattern.compile("^(https?://[^/]+)");
     private final Map<String, CrawlTask> tasks = new HashMap<>();
     
+
     public List<BasicCrawlStatus> getAllTasks() {
         return tasks.entrySet().stream().map(e -> BasicCrawlStatus.builder().taskId(e.getKey())
                 .projectName(e.getValue().getCrawlData().getWebsite().getProjectName())
                 .domain(e.getValue().getCrawlData().getWebsite().getDomain())
                 .status(e.getValue().getStatus()).build()).collect(Collectors.toList());
     }
-    
+
     public CrawlResponse startCrawling(CrawlRequest crawlRequest) {
         Website website = generateWebsiteProject(crawlRequest);
         String dataId = UUID.randomUUID().toString();
         CrawlData data = new CrawlData(dataId, website);
-        CrawlTask crawlTask = objectProvider.getObject(data);
+        CrawlTask crawlTask = objectProvider.getObject(data, crawlRequest.getThreadsCount());
         crawlTask.addListener(this);
-        crawlTask.crawl(crawlRequest.getThreadsCount());
+        executorService.execute(crawlTask);
+    
         String taskId = UUID.randomUUID().toString();
         tasks.put(taskId, crawlTask);
         return CrawlResponse.builder()
@@ -67,7 +71,7 @@ public class CrawlerService implements CrawlCompleteListener {
                 .projectName(website.getProjectName())
                 .build();
     }
-    
+
     public CrawlStatus getCrawlStatus(String taskId) {
         CrawlTask crawlTask = tasks.get(taskId);
         if (crawlTask == null) {
@@ -75,20 +79,20 @@ public class CrawlerService implements CrawlCompleteListener {
         }
         return createCrawlStatus(crawlTask);
     }
-    
+
     public CrawlStatus stopCrawling(String taskId) {
         CrawlTask crawlTask = tasks.get(taskId);
         if (crawlTask == null) {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
         }
-        crawlTask.shutDown();
+        crawlTask.requestToStop();
         return createCrawlStatus(crawlTask);
     }
-    
+
     private CrawlStatus createCrawlStatus(CrawlTask task) {
         CrawlData crawlData = task.getCrawlData();
         Website website = crawlData.getWebsite();
-         return CrawlStatus.builder()
+        return CrawlStatus.builder()
                 .projectName(website.getProjectName())
                 .domain(website.getDomain())
                 .crawledPages(crawlData.getCrawledPages().size())
@@ -97,7 +101,7 @@ public class CrawlerService implements CrawlCompleteListener {
                 .status(task.getStatus())
                 .build();
     }
-    
+
     private Website generateWebsiteProject(CrawlRequest crawlRequest) {
         String url = crawlRequest.getStartUrl();
         String domain = cutDomain(url);
@@ -107,7 +111,7 @@ public class CrawlerService implements CrawlCompleteListener {
         }
         return new Website(projectName, url, domain);
     }
-    
+
     private String cutDomain(String url) {
         Matcher matcher = pattern.matcher(url);
         if (matcher.find()) {

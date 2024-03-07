@@ -5,7 +5,6 @@ import com.experimental.webcrawler.crawler.ContentParser;
 import com.experimental.webcrawler.crawler.CrawlClient;
 import com.experimental.webcrawler.crawler.CrawlExecutor;
 import com.experimental.webcrawler.crawler.Parser;
-import com.experimental.webcrawler.crawler.ThreadCompleteListener;
 import com.experimental.webcrawler.crawler.model.ConnectionResponse;
 import com.experimental.webcrawler.crawler.model.WebPage;
 import com.experimental.webcrawler.crawler.model.CrawlData;
@@ -19,18 +18,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CrawlTask implements ThreadCompleteListener, CrawlExecutor {
+public class CrawlTask implements CrawlExecutor {
 
     @Autowired
     private ObjectProvider<ExecutorService> executorServiceProvider;
+
+    private final int threadCount;
     @Getter
     private final CrawlData crawlData;
     private final Parser parser;
@@ -38,11 +37,10 @@ public class CrawlTask implements ThreadCompleteListener, CrawlExecutor {
     private ExecutorService executorService;
     private final CrawlClient crawlClient;
     private Status status;
-
-    private final Map<String, CompletableRunnable> threads = new ConcurrentHashMap<>();
     private final List<CrawlCompleteListener> listeners = new ArrayList<>();
-
-
+    private final List<CompletableRunnable> threads = new ArrayList<>();
+    private CountDownLatch countDownLatch;
+    
     public void addListener(CrawlCompleteListener listener) {
         listeners.add(listener);
     }
@@ -54,52 +52,66 @@ public class CrawlTask implements ThreadCompleteListener, CrawlExecutor {
     public Status getStatus() {
         return this.status;
     }
-
-
+    
     @Override
-    public void crawl(int threadCount) {
+    public void run() {
+        crawl();
+    }
+    
+    private void crawl() {
         WebPage pageToCrawl = new WebPage();
         String startUrl = this.crawlData.getWebsite().getStartUrl();
         pageToCrawl.setUrl(startUrl);
         ConnectionResponse connectionResponse = crawlClient.connect(startUrl);
         parser.parseLinks(pageToCrawl, connectionResponse);
+        int computedThreadsCount = threadCount;
         List<WebPage> startLinks = crawlData.getInternalLinks().stream()
-                .limit(threadCount)
+                .limit(computedThreadsCount)
                 .collect(Collectors.toList());
         if (startLinks.isEmpty()) {
             status = Status.ERROR;
             log.error("Couldn't find amy links on start page.");
             return;
-        } else if (startLinks.size() < threadCount) {
-            threadCount = startLinks.size();
+        } else if (startLinks.size() < computedThreadsCount) {
+            computedThreadsCount = startLinks.size();
         }
-        executorService = executorServiceProvider.getObject(threadCount);
-        log.info("Starting crawling website {} with {} threads", crawlData.getWebsite().getDomain(), threadCount);
-
+        executorService = executorServiceProvider.getObject(computedThreadsCount);
+        log.info("Starting crawling website {} with {} threads", crawlData.getWebsite().getDomain(), computedThreadsCount);
+        countDownLatch = new CountDownLatch(computedThreadsCount);
         for (WebPage startLink : startLinks) {
-            String id = UUID.randomUUID().toString();
-            CompletableRunnable thread = new CrawlThread(id, startLink, this.crawlData, parser, contentParser, crawlClient);
-            thread.addThreadCompleteListener(this);
-            threads.put(id, thread);
+            CompletableRunnable thread = new CrawlThread(startLink, this.crawlData, parser, contentParser, crawlClient, countDownLatch);
+            threads.add(thread);
             executorService.execute(thread);
         }
 
         status = Status.RUNNING;
+        complete();
     }
 
     @Override
-    public void shutDown() {
+    public void requestToStop() {
         log.info("Crawling requested to stop.");
-        for (Map.Entry<String, CompletableRunnable> entry : threads.entrySet()) {
-            entry.getValue().stop();
+        for (CompletableRunnable thread : threads) {
+            thread.stop();
+        }
+        if (countDownLatch != null) {
+            try {
+                countDownLatch.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
-    @Override
-    public void onThreadComplete(final String threadId) {
-        threads.remove(threadId);
-        log.info("Thread {} exited.", threadId);
-        if (threads.isEmpty()) {
+    public void complete() {
+        if (countDownLatch != null) {
+            try {
+                countDownLatch.await();
+            } catch (InterruptedException e) {
+                log.error("Crawling completion has been interrupted.", e);
+                Thread.currentThread().interrupt();
+            }
             status = Status.STOPPED;
             if (executorService != null && !executorService.isShutdown()) {
                 executorService.shutdown();
@@ -114,8 +126,8 @@ public class CrawlTask implements ThreadCompleteListener, CrawlExecutor {
             listener.onCrawlCompete(event);
         }
     }
-    
 
+    
     public enum Status {
         RUNNING,
         STOPPED,

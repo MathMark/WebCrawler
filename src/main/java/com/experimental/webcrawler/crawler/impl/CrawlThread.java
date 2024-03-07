@@ -4,52 +4,34 @@ import com.experimental.webcrawler.crawler.CompletableRunnable;
 import com.experimental.webcrawler.crawler.ContentParser;
 import com.experimental.webcrawler.crawler.CrawlClient;
 import com.experimental.webcrawler.crawler.Parser;
-import com.experimental.webcrawler.crawler.ThreadCompleteListener;
 import com.experimental.webcrawler.crawler.model.BrokenWebPage;
 import com.experimental.webcrawler.crawler.model.ConnectionResponse;
 import com.experimental.webcrawler.crawler.model.Content;
 import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.crawler.model.WebPage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-
-import java.net.http.HttpClient;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
+@Slf4j
 public class CrawlThread implements CompletableRunnable {
     
-    private final String id;
     private final WebPage startPage;
     private final CrawlData crawlData;
     private final AtomicBoolean isRequestedToStop = new AtomicBoolean();
-    private final List<ThreadCompleteListener> listeners = new ArrayList<>();
     private final Parser parser;
     private final ContentParser contentParser;
     private final CrawlClient crawlClient;
+    private final CountDownLatch latch;
     //TODO: Use separate http client for each thread!!!
 
     public synchronized void stop() {
         isRequestedToStop.set(true);
     }
-
-    @Override
-    public void addThreadCompleteListener(ThreadCompleteListener listener) {
-        listeners.add(listener);
-    }
-
-    @Override
-    public void removeThreadCompleteListener(ThreadCompleteListener listener) {
-        listeners.remove(listener);
-    }
-
-    private void notifyListeners() {
-        for (ThreadCompleteListener listener : listeners) {
-            listener.onThreadComplete(this.id);
-        }
-    }
+    
 
     private boolean isStopped() {
         return this.crawlData.getInternalLinks().isEmpty() ||
@@ -81,7 +63,8 @@ public class CrawlThread implements CompletableRunnable {
                 webPage.setContent(content);
             } 
         }
-        notifyListeners();
+        latch.countDown();
+        log.info(String.format("Thread %s exited", Thread.currentThread().getName()));
     }
 }
 

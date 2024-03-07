@@ -43,8 +43,8 @@ public class AppConfig {
     
     @Bean
     @Scope(BeanDefinition.SCOPE_PROTOTYPE)
-    public CrawlTask crawlTask(CrawlData crawlData) {
-        return new CrawlTask(crawlData, webParser(crawlData), contentParserImpl(), crawlClientImpl());
+    public CrawlTask crawlTask(CrawlData crawlData, int threadsCount) {
+        return new CrawlTask(threadsCount, crawlData, webParser(crawlData), contentParserImpl(), crawlClientImpl());
     }
     
     @Bean
