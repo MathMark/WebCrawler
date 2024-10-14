@@ -99,9 +99,4 @@ public class CrawlController {
         List<BasicCrawlStatus> tasks = crawlerService.getAllTasks();
         return ResponseEntity.ok(tasks);
     }
-
-
-    /** TODO: add the following endpoints:
-     * pause crawling
-     */
 }
