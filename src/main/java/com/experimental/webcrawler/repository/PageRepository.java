@@ -1,6 +1,6 @@
 package com.experimental.webcrawler.repository;
 
-import com.experimental.webcrawler.model.WebPageDocument;
+import com.experimental.webcrawler.model.document.WebPageDocument;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;

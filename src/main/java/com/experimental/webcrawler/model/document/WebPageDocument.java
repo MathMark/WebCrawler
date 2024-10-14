@@ -1,5 +1,6 @@
-package com.experimental.webcrawler.model;
+package com.experimental.webcrawler.model.document;
 
+import com.experimental.webcrawler.model.ContentEntity;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;

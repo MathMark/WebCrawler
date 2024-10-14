@@ -1,6 +1,6 @@
 package com.experimental.webcrawler.controller;
 
-import com.experimental.webcrawler.model.WebsiteProjectDocument;
+import com.experimental.webcrawler.model.document.WebsiteProjectDocument;
 import com.experimental.webcrawler.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

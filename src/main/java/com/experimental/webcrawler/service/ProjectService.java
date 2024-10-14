@@ -1,9 +1,9 @@
 package com.experimental.webcrawler.service;
 
 import com.experimental.webcrawler.exception.ProjectNotFoundException;
-import com.experimental.webcrawler.model.BrokenPagesDocument;
-import com.experimental.webcrawler.model.WebsiteProjectDocument;
-import com.experimental.webcrawler.repository.BrokenPagesReportRepository;
+import com.experimental.webcrawler.model.report.BrokenPagesReportDocument;
+import com.experimental.webcrawler.model.document.WebsiteProjectDocument;
+import com.experimental.webcrawler.repository.ReportDocumentRepository;
 import com.experimental.webcrawler.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,7 @@ import java.util.Optional;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
-    private final BrokenPagesReportRepository brokenPagesReportRepository;
+    private final ReportDocumentRepository reportDocumentRepository;
 
     public List<WebsiteProjectDocument> getAllProjects() {
         return projectRepository.findAll();
@@ -29,13 +29,13 @@ public class ProjectService {
     }
 
     public void deleteProject(String id) {
-        Optional<WebsiteProjectDocument> projectOptional = projectRepository.findById(id);
-        if (projectOptional.isPresent()) {
-            Optional<BrokenPagesDocument> brokenPagesReportOptional = brokenPagesReportRepository.findByWebsiteProjectId(id);
-            brokenPagesReportOptional.ifPresent(brokenPagesReport -> brokenPagesReportRepository.deleteById(brokenPagesReport.getId()));
-            projectRepository.deleteById(id);
-        } else {
-            throw new ProjectNotFoundException(String.format("Project with id %s not found.", id));
-        }
+//        Optional<WebsiteProjectDocument> projectOptional = projectRepository.findById(id);
+//        if (projectOptional.isPresent()) {
+//            Optional<BrokenPagesReportDocument> brokenPagesReportOptional = reportDocumentRepository.findByWebsiteProjectId(id);
+//            brokenPagesReportOptional.ifPresent(brokenPagesReport -> reportDocumentRepository.deleteById(brokenPagesReport.getId()));
+//            projectRepository.deleteById(id);
+//        } else {
+//            throw new ProjectNotFoundException(String.format("Project with id %s not found.", id));
+//        }
     }
 }

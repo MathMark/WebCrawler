@@ -3,7 +3,7 @@ package com.experimental.webcrawler.service;
 import com.experimental.webcrawler.controller.model.PagingForm;
 import com.experimental.webcrawler.dto.page.WebPageDto;
 import com.experimental.webcrawler.mapper.WebMapper;
-import com.experimental.webcrawler.model.WebPageDocument;
+import com.experimental.webcrawler.model.document.WebPageDocument;
 import com.experimental.webcrawler.repository.PageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

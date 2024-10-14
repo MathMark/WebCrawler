@@ -5,8 +5,11 @@ import com.experimental.webcrawler.dto.report.ReportDto;
 import com.experimental.webcrawler.dto.report.ReportsDto;
 import com.experimental.webcrawler.exception.ReportNotFoundException;
 import com.experimental.webcrawler.mapper.WebMapper;
-import com.experimental.webcrawler.model.BrokenPagesDocument;
-import com.experimental.webcrawler.repository.BrokenPagesReportRepository;
+import com.experimental.webcrawler.model.report.BaseReportDocument;
+import com.experimental.webcrawler.model.report.BrokenPagesReportDocument;
+import com.experimental.webcrawler.model.report.EmptyTitleReportDocument;
+import com.experimental.webcrawler.repository.BrokenPageReportRepository;
+import com.experimental.webcrawler.repository.ReportDocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,24 +20,29 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ReportsService {
     
-    private final BrokenPagesReportRepository brokenPagesReportRepository;
+    private final ReportDocumentRepository reportDocumentRepository;
+    private final BrokenPageReportRepository brokenPageReportRepository;
     
-    public ReportsDto getAllReports(String websiteProjectId) {
-        ReportsDto reportsDto = new ReportsDto();
-        Optional<BrokenPagesDocument> brokenPagesReportOptional = brokenPagesReportRepository.findByWebsiteProjectId(websiteProjectId);
-        brokenPagesReportOptional.ifPresent(brokenPagesReport -> {
-            ReportDto report = new ReportDto();
-            report.setReportId(brokenPagesReport.getId());
-            report.setReportType(ReportDto.ReportType.BROKEN_PAGES);
-            report.setPagesCount(brokenPagesReport.getBrokenPages().size());
-            reportsDto.setReport(report);
-        });
-        return reportsDto;
+    public List<ReportDto> getAllReports(String websiteProjectId) {
+        List<BaseReportDocument> reports = reportDocumentRepository.findAllByWebsiteProjectId2(websiteProjectId);
+        return reports.stream().map(this::mapToReportDto).toList();
     }
     
-    public List<BrokenPagesReportResponse> getBrokenPagesReport(String reportId) {
-        Optional<BrokenPagesDocument> brokenPagesReportOptional = brokenPagesReportRepository.findById(reportId);
-        BrokenPagesDocument brokenPagesDocument = brokenPagesReportOptional.orElseThrow(() -> new ReportNotFoundException(""));
-        return WebMapper.mapToBrokenPagesReportResponse(brokenPagesDocument);
+    public List<List<BrokenPagesReportResponse>> getBrokenPagesReport(String websiteProjectId) {
+        List<BrokenPagesReportDocument> brokenPagesReports = brokenPageReportRepository.findBrokenPagesReportsByWebsiteProjectId(websiteProjectId);
+        return brokenPagesReports.stream().map(WebMapper::mapToBrokenPagesReportResponse).toList();
+    }
+    
+    private ReportDto mapToReportDto(BaseReportDocument report) {
+        ReportDto reportDto = new ReportDto();
+        reportDto.setReportId(report.getId());
+     
+        if (report instanceof BrokenPagesReportDocument brokenPagesReport) {
+            reportDto.setReportType(ReportDto.ReportType.BROKEN_PAGES);
+            reportDto.setPagesCount(brokenPagesReport.getBrokenPages().size());
+        } else if (report instanceof EmptyTitleReportDocument) {
+            reportDto.setReportType(ReportDto.ReportType.EMPTY_TITLES);
+        }
+        return reportDto;
     }
 }

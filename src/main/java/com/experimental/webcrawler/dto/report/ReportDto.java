@@ -9,6 +9,7 @@ public class ReportDto {
     private int pagesCount;
     
     public enum ReportType {
-        BROKEN_PAGES
+        BROKEN_PAGES,
+        EMPTY_TITLES
     }
 }

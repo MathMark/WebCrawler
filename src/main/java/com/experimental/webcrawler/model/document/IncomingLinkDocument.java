@@ -1,4 +1,4 @@
-package com.experimental.webcrawler.model;
+package com.experimental.webcrawler.model.document;
 
 import lombok.Getter;
 import lombok.Setter;

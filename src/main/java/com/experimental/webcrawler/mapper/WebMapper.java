@@ -8,12 +8,12 @@ import com.experimental.webcrawler.crawler.model.CrawlData;
 import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.dto.page.WebPageDto;
 import com.experimental.webcrawler.dto.report.BrokenPagesReportResponse;
-import com.experimental.webcrawler.model.BrokenPageEntity;
-import com.experimental.webcrawler.model.BrokenPagesDocument;
+import com.experimental.webcrawler.model.report.entity.BrokenPageEntity;
+import com.experimental.webcrawler.model.report.BrokenPagesReportDocument;
 import com.experimental.webcrawler.model.ContentEntity;
-import com.experimental.webcrawler.model.IncomingLinkDocument;
-import com.experimental.webcrawler.model.WebPageDocument;
-import com.experimental.webcrawler.model.WebsiteProjectDocument;
+import com.experimental.webcrawler.model.document.IncomingLinkDocument;
+import com.experimental.webcrawler.model.document.WebPageDocument;
+import com.experimental.webcrawler.model.document.WebsiteProjectDocument;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,18 +37,18 @@ public class WebMapper {
         return webPageDto;
     }
 
-    public static BrokenPagesDocument mapToBrokenPageReport(List<BrokenWebPage> brokenWebPages, String websiteProjectId) {
+    public static BrokenPagesReportDocument mapToBrokenPageReport(List<BrokenWebPage> brokenWebPages, String websiteProjectId) {
         List<BrokenPageEntity> brokenPageEntityList = brokenWebPages.stream()
                 .map(WebMapper::mapToBrokenPageEntity).collect(Collectors.toList());
-        BrokenPagesDocument brokenPagesDocument = new BrokenPagesDocument();
-        brokenPagesDocument.setId(UUID.randomUUID().toString());
-        brokenPagesDocument.setBrokenPages(brokenPageEntityList);
-        brokenPagesDocument.setWebsiteProjectId(websiteProjectId);
-        return brokenPagesDocument;
+        BrokenPagesReportDocument brokenPagesReportDocument = new BrokenPagesReportDocument();
+        brokenPagesReportDocument.setId(UUID.randomUUID().toString());
+        brokenPagesReportDocument.setBrokenPages(brokenPageEntityList);
+        brokenPagesReportDocument.setWebsiteProjectId(websiteProjectId);
+        return brokenPagesReportDocument;
     }
 
-    public static List<BrokenPagesReportResponse> mapToBrokenPagesReportResponse(BrokenPagesDocument brokenPagesDocument) {
-        List<BrokenPageEntity> brokenPageEntityList = brokenPagesDocument.getBrokenPages();
+    public static List<BrokenPagesReportResponse> mapToBrokenPagesReportResponse(BrokenPagesReportDocument brokenPagesReportDocument) {
+        List<BrokenPageEntity> brokenPageEntityList = brokenPagesReportDocument.getBrokenPages();
         return brokenPageEntityList.stream().map(bp -> {
             BrokenPagesReportResponse response = new BrokenPagesReportResponse();
             response.setInitialUrl(bp.getInitialUrl());
