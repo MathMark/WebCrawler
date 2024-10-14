@@ -2,7 +2,7 @@ package com.experimental.webcrawler.service;
 
 import com.experimental.webcrawler.exception.ProjectNotFoundException;
 import com.experimental.webcrawler.model.document.WebsiteProjectDocument;
-import com.experimental.webcrawler.repository.ReportDocumentRepository;
+import com.experimental.webcrawler.repository.report.ReportDocumentRepository;
 import com.experimental.webcrawler.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

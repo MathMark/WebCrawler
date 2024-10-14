@@ -6,10 +6,15 @@ import com.experimental.webcrawler.mapper.WebMapper;
 import com.experimental.webcrawler.model.report.BaseReportDocument;
 import com.experimental.webcrawler.model.report.BrokenPagesReportDocument;
 import com.experimental.webcrawler.model.report.EmptyTitleReportDocument;
-import com.experimental.webcrawler.repository.BrokenPageReportRepository;
-import com.experimental.webcrawler.repository.ReportDocumentRepository;
+import com.experimental.webcrawler.repository.report.BrokenPageReportRepository;
+import com.experimental.webcrawler.repository.report.ReportDocumentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 
@@ -20,9 +25,11 @@ public class ReportsService {
     private final ReportDocumentRepository reportDocumentRepository;
     private final BrokenPageReportRepository brokenPageReportRepository;
     
-    public List<ReportDto> getAllReports(String websiteProjectId) {
-        List<BaseReportDocument> reports = reportDocumentRepository.findAllByWebsiteProjectId2(websiteProjectId);
-        return reports.stream().map(this::mapToReportDto).toList();
+    public Page<ReportDto> getAllReports(String websiteProjectId, int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<BaseReportDocument> reports = reportDocumentRepository.findAllByWebsiteProjectId(websiteProjectId, pageable);
+        List<ReportDto> converted = reports.stream().map(this::mapToReportDto).toList();
+        return new PageImpl<>(converted, pageable, reports.getTotalElements());
     }
     
     public List<List<BrokenPagesReportResponse>> getBrokenPagesReport(String websiteProjectId) {

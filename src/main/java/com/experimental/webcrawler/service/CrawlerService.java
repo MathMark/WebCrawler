@@ -12,7 +12,7 @@ import com.experimental.webcrawler.mapper.WebMapper;
 import com.experimental.webcrawler.model.report.BrokenPagesReportDocument;
 import com.experimental.webcrawler.model.document.WebPageDocument;
 import com.experimental.webcrawler.model.document.WebsiteProjectDocument;
-import com.experimental.webcrawler.repository.ReportDocumentRepository;
+import com.experimental.webcrawler.repository.report.ReportDocumentRepository;
 
 import com.experimental.webcrawler.repository.PageRepository;
 import com.experimental.webcrawler.repository.ProjectRepository;

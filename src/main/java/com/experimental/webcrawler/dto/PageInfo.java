@@ -1,6 +1,8 @@
-package com.experimental.webcrawler.controller.model;
+package com.experimental.webcrawler.dto;
 
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,7 +10,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class PagingForm {
+public class PageInfo {
+    @Min(0)
     private int pageNumber = 0;
+    @Min(1)
+    @Max(100)
     private int pageSize = 10;
 }

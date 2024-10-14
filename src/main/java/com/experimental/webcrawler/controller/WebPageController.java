@@ -1,6 +1,6 @@
 package com.experimental.webcrawler.controller;
 
-import com.experimental.webcrawler.controller.model.PagingForm;
+import com.experimental.webcrawler.dto.PageInfo;
 import com.experimental.webcrawler.dto.page.WebPageDto;
 import com.experimental.webcrawler.service.PageService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,8 +34,8 @@ public class WebPageController {
             description = "HTTP Status OK"
     )
     @GetMapping
-    public ResponseEntity<Page<WebPageDto>> getAllPages(@RequestParam String websiteProjectId, PagingForm pagingForm) {
-        Page<WebPageDto> page = pageService.getAllPages(websiteProjectId, pagingForm);
+    public ResponseEntity<Page<WebPageDto>> getAllPages(@RequestParam String websiteProjectId, PageInfo pageInfo) {
+        Page<WebPageDto> page = pageService.getAllPages(websiteProjectId, pageInfo);
         return ResponseEntity.ok(page);
     }
     

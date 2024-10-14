@@ -1,4 +1,4 @@
-package com.experimental.webcrawler.repository;
+package com.experimental.webcrawler.repository.report;
 
 import com.experimental.webcrawler.model.report.BrokenPagesReportDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -9,7 +9,6 @@ import java.util.List;
 
 @Repository
 public interface BrokenPageReportRepository extends MongoRepository<BrokenPagesReportDocument, String> {
-    
     @Query("{ 'websiteProjectId': ?0 }")
     List<BrokenPagesReportDocument> findBrokenPagesReportsByWebsiteProjectId(String websiteProjectId);
 }
