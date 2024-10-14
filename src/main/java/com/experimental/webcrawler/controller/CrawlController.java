@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @Tag(
-        name = "CRUD REST WEBCRAWLER API",
+        name = "CRAWL",
         description = "CRUD REST APIs for controlling crawling process."
 )
 @RestController
@@ -36,7 +36,7 @@ public class CrawlController {
     private final CrawlerService crawlerService;
 
     @Operation(
-            summary = "Start Crawling REST API",
+            summary = "Start crawling",
             description = "REST API to initiate crawling process"
     )
 
@@ -58,7 +58,7 @@ public class CrawlController {
     }
 
     @Operation(
-            summary = "Get Status of Crawling REST API",
+            summary = "Get status",
             description = "REST API to get status of a certain crawling process"
     )
     @ApiResponse(
@@ -73,7 +73,7 @@ public class CrawlController {
 
     
     @Operation(
-            summary = "Stop Crawling REST API",
+            summary = "Stop crawling",
             description = "REST API to stop a certain crawling process"
     )
     @ApiResponse(
@@ -87,7 +87,7 @@ public class CrawlController {
     }
 
     @Operation(
-            summary = "Get All Crawling Processes REST API",
+            summary = "Get all",
             description = "REST API to get all initiated crawling processes."
     )
     @ApiResponse(
