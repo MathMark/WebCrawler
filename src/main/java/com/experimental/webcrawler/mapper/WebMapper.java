@@ -22,11 +22,7 @@ import java.util.stream.Collectors;
 public class WebMapper {
     private WebMapper() {
     }
-
-
-    public static List<WebPageDto> mapToPageDtos(List<WebPageDocument> pageEntities) {
-        return pageEntities.stream().map(WebMapper::mapToPageDto).collect(Collectors.toList());
-    }
+    
 
     public static WebPageDto mapToPageDto(WebPageDocument webPageDocument) {
         WebPageDto webPageDto = new WebPageDto();

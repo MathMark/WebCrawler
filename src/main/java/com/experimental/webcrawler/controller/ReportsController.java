@@ -2,7 +2,6 @@ package com.experimental.webcrawler.controller;
 
 import com.experimental.webcrawler.dto.report.BrokenPagesReportResponse;
 import com.experimental.webcrawler.dto.report.ReportDto;
-import com.experimental.webcrawler.dto.report.ReportsDto;
 import com.experimental.webcrawler.service.ReportsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -12,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;

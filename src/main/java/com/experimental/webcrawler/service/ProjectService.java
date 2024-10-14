@@ -1,7 +1,6 @@
 package com.experimental.webcrawler.service;
 
 import com.experimental.webcrawler.exception.ProjectNotFoundException;
-import com.experimental.webcrawler.model.report.BrokenPagesReportDocument;
 import com.experimental.webcrawler.model.document.WebsiteProjectDocument;
 import com.experimental.webcrawler.repository.ReportDocumentRepository;
 import com.experimental.webcrawler.repository.ProjectRepository;

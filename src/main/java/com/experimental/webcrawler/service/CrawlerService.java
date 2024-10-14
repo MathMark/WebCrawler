@@ -106,7 +106,7 @@ public class CrawlerService implements CrawlCompleteListener {
         String url = crawlRequest.getStartUrl();
         String domain = cutDomain(url);
         String projectName = crawlRequest.getProjectName();
-        if (projectName == null || "".equals(projectName)) {
+        if (projectName == null || projectName.isBlank()) {
             projectName = domain;
         }
         return new Website(projectName, url, domain);
