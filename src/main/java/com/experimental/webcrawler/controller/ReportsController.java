@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @Tag(
         name = "REPORTS",
         description = "REST API for reports."
@@ -65,9 +63,23 @@ public class ReportsController {
             responseCode = "200",
             description = "HTTP Status OK"
     )
+    @Parameters({
+            @Parameter(
+                    name = "pageNumber",
+                    description = "The page number to retrieve (starting from 0)",
+                    example = "0"
+            ),
+            @Parameter(
+                    name = "pageSize",
+                    description = "The number of items per page",
+                    example = "10"
+            )
+    })
     @GetMapping("/{projectId}/broken-pages")
-    public ResponseEntity<List<List<BrokenPagesReportResponse>>> getAllBrokenPages(@PathVariable String projectId) {
-        return ResponseEntity.ok(reportsService.getBrokenPagesReport(projectId));
+    public ResponseEntity<Page<BrokenPagesReportResponse>> getAllBrokenPages(@PathVariable String projectId,
+                                                                             @RequestParam int pageNumber,
+                                                                             @RequestParam int pageSize) {
+        return ResponseEntity.ok(reportsService.getBrokenPagesReport(projectId, pageNumber, pageSize));
     }
 
 }

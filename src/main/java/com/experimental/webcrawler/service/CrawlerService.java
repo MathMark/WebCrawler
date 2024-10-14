@@ -1,6 +1,7 @@
 package com.experimental.webcrawler.service;
 
 import com.experimental.webcrawler.crawler.impl.CrawlTask;
+import com.experimental.webcrawler.crawler.model.BrokenWebPage;
 import com.experimental.webcrawler.crawler.model.Website;
 import com.experimental.webcrawler.dto.crawl.BasicCrawlStatus;
 import com.experimental.webcrawler.dto.crawl.CrawlRequest;
@@ -12,6 +13,8 @@ import com.experimental.webcrawler.mapper.WebMapper;
 import com.experimental.webcrawler.model.report.BrokenPagesReportDocument;
 import com.experimental.webcrawler.model.document.WebPageDocument;
 import com.experimental.webcrawler.model.document.WebsiteProjectDocument;
+import com.experimental.webcrawler.model.report.entity.BrokenPageEntity;
+import com.experimental.webcrawler.model.report.entity.IncomingLink;
 import com.experimental.webcrawler.repository.report.ReportDocumentRepository;
 
 import com.experimental.webcrawler.repository.PageRepository;
@@ -126,8 +129,32 @@ public class CrawlerService implements CrawlCompleteListener {
         websiteProjectRepository.save(websiteProjectDocument);
         List<WebPageDocument> pageEntities = WebMapper.mapToPageEntities(event.getCrawlData().getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
         pageRepository.saveAll(pageEntities);
-        BrokenPagesReportDocument brokenPagesReportDocument = WebMapper.mapToBrokenPageReport(event.getCrawlData().getBrokenWebPages(), websiteProjectDocument.getId());
+        BrokenPagesReportDocument brokenPagesReportDocument = this.mapToBrokenPageReport(event.getCrawlData().getBrokenWebPages(), websiteProjectDocument.getId());
         reportDocumentRepository.save(brokenPagesReportDocument);
         log.info("Report for website {} has been successfully saved.", event.getCrawlData().getWebsite().getDomain());
+    }
+    
+    public  BrokenPagesReportDocument mapToBrokenPageReport(List<BrokenWebPage> brokenWebPages, String websiteProjectId) {
+        List<BrokenPageEntity> brokenPageEntityList = brokenWebPages.stream()
+                .map(this::mapToBrokenPageEntity).collect(Collectors.toList());
+        BrokenPagesReportDocument brokenPagesReportDocument = new BrokenPagesReportDocument();
+        brokenPagesReportDocument.setId(UUID.randomUUID().toString());
+        brokenPagesReportDocument.setBrokenPages(brokenPageEntityList);
+        brokenPagesReportDocument.setWebsiteProjectId(websiteProjectId);
+        return brokenPagesReportDocument;
+    }
+    
+    private BrokenPageEntity mapToBrokenPageEntity(BrokenWebPage brokenWebPage) {
+        BrokenPageEntity brokenPageEntity = new BrokenPageEntity();
+        brokenPageEntity.setIncomingLinks(brokenWebPage.getWebPage().getIncomingLinks().stream().map(p -> {
+            IncomingLink incomingLink = new IncomingLink();
+            incomingLink.setUrl(p.getUrl());
+            incomingLink.setHrefText(p.getHrefText());
+            return incomingLink;
+        }).toList());
+        brokenPageEntity.setUrl(brokenWebPage.getWebPage().getUrl());
+        brokenPageEntity.setTextAttribute(null);
+        brokenPageEntity.setStatusCode(brokenWebPage.getStatusCode());
+        return brokenPageEntity;
     }
 }

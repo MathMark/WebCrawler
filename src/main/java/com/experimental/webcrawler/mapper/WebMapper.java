@@ -14,6 +14,7 @@ import com.experimental.webcrawler.model.ContentEntity;
 import com.experimental.webcrawler.model.document.IncomingLinkDocument;
 import com.experimental.webcrawler.model.document.WebPageDocument;
 import com.experimental.webcrawler.model.document.WebsiteProjectDocument;
+import com.experimental.webcrawler.model.report.entity.IncomingLink;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,27 +34,7 @@ public class WebMapper {
         return webPageDto;
     }
 
-    public static BrokenPagesReportDocument mapToBrokenPageReport(List<BrokenWebPage> brokenWebPages, String websiteProjectId) {
-        List<BrokenPageEntity> brokenPageEntityList = brokenWebPages.stream()
-                .map(WebMapper::mapToBrokenPageEntity).collect(Collectors.toList());
-        BrokenPagesReportDocument brokenPagesReportDocument = new BrokenPagesReportDocument();
-        brokenPagesReportDocument.setId(UUID.randomUUID().toString());
-        brokenPagesReportDocument.setBrokenPages(brokenPageEntityList);
-        brokenPagesReportDocument.setWebsiteProjectId(websiteProjectId);
-        return brokenPagesReportDocument;
-    }
-
-    public static List<BrokenPagesReportResponse> mapToBrokenPagesReportResponse(BrokenPagesReportDocument brokenPagesReportDocument) {
-        List<BrokenPageEntity> brokenPageEntityList = brokenPagesReportDocument.getBrokenPages();
-        return brokenPageEntityList.stream().map(bp -> {
-            BrokenPagesReportResponse response = new BrokenPagesReportResponse();
-            response.setInitialUrl(bp.getInitialUrl());
-            response.setHref(bp.getHref());
-            response.setTextAttribute(bp.getTextAttribute());
-            response.setStatusCode(bp.getStatusCode());
-            return response;
-        }).collect(Collectors.toList());
-    }
+    
 
     public static WebsiteProjectDocument mapToWebsiteProject(CrawlData crawlData) {
         WebsiteProjectDocument websiteProjectDocument = new WebsiteProjectDocument();
@@ -102,12 +83,5 @@ public class WebMapper {
     }
 
 
-    private static BrokenPageEntity mapToBrokenPageEntity(BrokenWebPage brokenWebPage) {
-        BrokenPageEntity brokenPageEntity = new BrokenPageEntity();
-        brokenPageEntity.setInitialUrl(null);
-        brokenPageEntity.setHref(brokenWebPage.getWebPage().getUrl());
-        brokenPageEntity.setTextAttribute(null);
-        brokenPageEntity.setStatusCode(brokenWebPage.getStatusCode());
-        return brokenPageEntity;
-    }
+    
 }
