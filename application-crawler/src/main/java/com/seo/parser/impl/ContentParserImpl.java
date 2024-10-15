@@ -1,6 +1,6 @@
-package com.seo.crawler.impl;
+package com.seo.parser.impl;
 
-import com.seo.crawler.ContentParser;
+import com.seo.parser.ContentParser;
 import com.seo.model.Content;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

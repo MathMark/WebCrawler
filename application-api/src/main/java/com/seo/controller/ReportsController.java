@@ -1,4 +1,4 @@
-package com.seo;
+package com.seo.controller;
 
 import com.seo.dto.report.BrokenPagesReportResponse;
 import com.seo.dto.report.ReportDto;

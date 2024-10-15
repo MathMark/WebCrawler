@@ -1,4 +1,4 @@
-package com.seo.crawler;
+package com.seo.parser;
 
 import com.seo.model.ConnectionResponse;
 import com.seo.model.WebPage;

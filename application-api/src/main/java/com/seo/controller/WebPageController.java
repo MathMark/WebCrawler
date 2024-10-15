@@ -1,4 +1,4 @@
-package com.seo;
+package com.seo.controller;
 
 import com.seo.dto.PageInfo;
 import com.seo.dto.page.WebPageDto;

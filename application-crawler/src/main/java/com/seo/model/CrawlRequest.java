@@ -1,4 +1,4 @@
-package com.seo.crawl;
+package com.seo.model;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;

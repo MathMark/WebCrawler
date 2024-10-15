@@ -2,6 +2,7 @@ package com.seo.service;
 
 import com.seo.exception.ProjectNotFoundException;
 import com.seo.model.document.WebsiteProjectDocument;
+import com.seo.model.report.BaseReportDocument;
 import com.seo.repository.report.ReportDocumentRepository;
 import com.seo.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +29,13 @@ public class ProjectService {
     }
 
     public void deleteProject(String id) {
-//        Optional<WebsiteProjectDocument> projectOptional = projectRepository.findById(id);
-//        if (projectOptional.isPresent()) {
-//            Optional<BrokenPagesReportDocument> brokenPagesReportOptional = reportDocumentRepository.findByWebsiteProjectId(id);
-//            brokenPagesReportOptional.ifPresent(brokenPagesReport -> reportDocumentRepository.deleteById(brokenPagesReport.getId()));
-//            projectRepository.deleteById(id);
-//        } else {
-//            throw new ProjectNotFoundException(String.format("Project with id %s not found.", id));
-//        }
+        Optional<WebsiteProjectDocument> projectOptional = projectRepository.findById(id);
+        if (projectOptional.isPresent()) {
+            List<BaseReportDocument> reports = reportDocumentRepository.findAllByWebsiteProjectId(id);
+            reports.forEach(e -> reportDocumentRepository.deleteById(e.getId()));
+            projectRepository.deleteById(id);
+        } else {
+            throw new ProjectNotFoundException(String.format("Project with id %s not found.", id));
+        }
     }
 }

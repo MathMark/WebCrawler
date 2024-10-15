@@ -1,4 +1,4 @@
-package com.seo;
+package com.seo.controller;
 
 import com.seo.model.document.WebsiteProjectDocument;
 import com.seo.service.ProjectService;

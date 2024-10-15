@@ -1,11 +1,11 @@
 package com.seo.crawler.impl;
 
 import com.seo.crawler.CompletableRunnable;
-import com.seo.crawler.ContentParser;
+import com.seo.parser.ContentParser;
 import com.seo.crawler.CrawlClient;
 import com.seo.crawler.CrawlCompleteListener;
 import com.seo.crawler.CrawlExecutor;
-import com.seo.crawler.Parser;
+import com.seo.parser.Parser;
 import com.seo.crawler.event.CrawlCompletedEvent;
 import com.seo.model.ConnectionResponse;
 import com.seo.model.WebPage;
@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -36,6 +35,7 @@ public class CrawlTask implements CrawlExecutor {
     private final ContentParser contentParser;
     private ExecutorService executorService;
     private final CrawlClient crawlClient;
+    @Getter
     private Status status;
     private final List<CrawlCompleteListener> listeners = new ArrayList<>();
     private final List<CompletableRunnable> threads = new ArrayList<>();
@@ -49,10 +49,6 @@ public class CrawlTask implements CrawlExecutor {
         listeners.remove(listener);
     }
 
-    public Status getStatus() {
-        return this.status;
-    }
-    
     @Override
     public void run() {
         crawl();
@@ -67,7 +63,7 @@ public class CrawlTask implements CrawlExecutor {
         int computedThreadsCount = threadCount;
         List<WebPage> startLinks = crawlData.getInternalLinks().stream()
                 .limit(computedThreadsCount)
-                .collect(Collectors.toList());
+                .toList();
         if (startLinks.isEmpty()) {
             status = Status.ERROR;
             log.error("Couldn't find amy links on start page.");

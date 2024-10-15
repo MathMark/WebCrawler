@@ -38,9 +38,6 @@ public class PageService {
     
     private WebPageDto mapToPageDto(WebPageDocument webPageDocument) {
         WebPageDto webPageDto = new WebPageDto();
-//        webPageDto.setTitle(webPageDocument.getTitle());
-//        webPageDto.setDescription(webPageDocument.getDescription());
-//        webPageDto.setRobotsContent(webPageDocument.getRobotsContent());
         webPageDto.setUrl(webPageDocument.getUrl());
         return webPageDto;
     }

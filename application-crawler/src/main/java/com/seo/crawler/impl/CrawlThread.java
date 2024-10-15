@@ -1,9 +1,9 @@
 package com.seo.crawler.impl;
 
 import com.seo.crawler.CompletableRunnable;
-import com.seo.crawler.ContentParser;
+import com.seo.parser.ContentParser;
 import com.seo.crawler.CrawlClient;
-import com.seo.crawler.Parser;
+import com.seo.parser.Parser;
 import com.seo.model.BrokenWebPage;
 import com.seo.model.ConnectionResponse;
 import com.seo.model.Content;
@@ -64,7 +64,7 @@ public class CrawlThread implements CompletableRunnable {
             } 
         }
         latch.countDown();
-        log.info(String.format("Thread %s exited", Thread.currentThread().getName()));
+        log.info("Thread {} exited", Thread.currentThread().getName());
     }
 }
 

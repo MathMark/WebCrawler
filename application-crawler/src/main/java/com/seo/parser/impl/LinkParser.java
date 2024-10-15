@@ -1,6 +1,6 @@
-package com.seo.crawler.impl;
+package com.seo.parser.impl;
 
-import com.seo.crawler.Parser;
+import com.seo.parser.Parser;
 import com.seo.model.ConnectionResponse;
 import com.seo.model.Link;
 import com.seo.model.WebPage;
