@@ -43,7 +43,7 @@ public class LinkParser implements Parser {
             WebPage webPage = new WebPage();
             webPage.setUrl(hrefUrl);
 
-            if (hrefUrl.startsWith(crawlData.getWebsite().getDomain())) {
+            if (hrefUrl.startsWith(crawlData.getWebsite().domain())) {
                 Link incomingLink = new Link();
                 incomingLink.setUrl(currentUrl);
                 incomingLink.setHrefText(nextPage.text());
@@ -63,7 +63,7 @@ public class LinkParser implements Parser {
 
     private String parseIfRelated(String url) {
         if (url.startsWith("/")) {
-            return crawlData.getWebsite().getDomain() + url;
+            return crawlData.getWebsite().domain() + url;
         }
         return url;
     }

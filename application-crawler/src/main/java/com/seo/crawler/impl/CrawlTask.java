@@ -60,7 +60,7 @@ public class CrawlTask implements CrawlExecutor {
     
     private void crawl() {
         WebPage pageToCrawl = new WebPage();
-        String startUrl = this.crawlData.getWebsite().getStartUrl();
+        String startUrl = this.crawlData.getWebsite().startUrl();
         pageToCrawl.setUrl(startUrl);
         ConnectionResponse connectionResponse = crawlClient.connect(startUrl);
         parser.parseLinks(pageToCrawl, connectionResponse);
@@ -76,7 +76,7 @@ public class CrawlTask implements CrawlExecutor {
             computedThreadsCount = startLinks.size();
         }
         executorService = executorServiceProvider.getObject(computedThreadsCount);
-        log.info("Starting crawling website {} with {} threads", crawlData.getWebsite().getDomain(), computedThreadsCount);
+        log.info("Starting crawling website {} with {} threads", crawlData.getWebsite().domain(), computedThreadsCount);
         countDownLatch = new CountDownLatch(computedThreadsCount);
         for (WebPage startLink : startLinks) {
             CompletableRunnable thread = new CrawlThread(startLink, this.crawlData, parser, contentParser, crawlClient, countDownLatch);

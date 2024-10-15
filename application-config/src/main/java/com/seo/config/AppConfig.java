@@ -1,13 +1,13 @@
 package com.seo.config;
 
-import com.seo.crawler.ContentParser;
 import com.seo.crawler.CrawlClient;
-import com.seo.crawler.Parser;
 import com.seo.crawler.impl.CrawlClientImpl;
-import com.seo.crawler.impl.CrawlTask;
 import com.seo.crawler.impl.ContentParserImpl;
-import com.seo.model.CrawlData;
 import com.seo.crawler.impl.LinkParser;
+import com.seo.crawler.Parser;
+import com.seo.crawler.ContentParser;
+import com.seo.model.CrawlData;
+import com.seo.crawler.impl.CrawlTask;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

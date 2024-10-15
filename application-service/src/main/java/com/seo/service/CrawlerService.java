@@ -52,8 +52,8 @@ public class CrawlerService implements CrawlCompleteListener {
 
     public List<BasicCrawlStatus> getAllTasks() {
         return tasks.entrySet().stream().map(e -> BasicCrawlStatus.builder().taskId(e.getKey())
-                .projectName(e.getValue().getCrawlData().getWebsite().getProjectName())
-                .domain(e.getValue().getCrawlData().getWebsite().getDomain())
+                .projectName(e.getValue().getCrawlData().getWebsite().projectName())
+                .domain(e.getValue().getCrawlData().getWebsite().domain())
                 .status(e.getValue().getStatus()).build()).collect(Collectors.toList());
     }
 
@@ -69,10 +69,10 @@ public class CrawlerService implements CrawlCompleteListener {
         tasks.put(taskId, crawlTask);
         return CrawlResponse.builder()
                 .initialUrl(crawlRequest.getStartUrl())
-                .domain(website.getDomain())
+                .domain(website.domain())
                 .taskId(taskId)
                 .websiteProjectId(dataId)
-                .projectName(website.getProjectName())
+                .projectName(website.projectName())
                 .build();
     }
 
@@ -97,8 +97,8 @@ public class CrawlerService implements CrawlCompleteListener {
         CrawlData crawlData = task.getCrawlData();
         Website website = crawlData.getWebsite();
         return CrawlStatus.builder()
-                .projectName(website.getProjectName())
-                .domain(website.getDomain())
+                .projectName(website.projectName())
+                .domain(website.domain())
                 .crawledPages(crawlData.getCrawledPages().size())
                 .remainedPages(crawlData.getInternalLinks().size())
                 .brokenPagesCount(crawlData.getBrokenWebPages().size())
@@ -126,13 +126,13 @@ public class CrawlerService implements CrawlCompleteListener {
 
     @Override
     public void onCrawlCompete(CrawlCompletedEvent event) {
-        WebsiteProjectDocument websiteProjectDocument = WebMapper.mapToWebsiteProject(event.getCrawlData());
+        WebsiteProjectDocument websiteProjectDocument = WebMapper.mapToWebsiteProject(event.crawlData());
         websiteProjectRepository.save(websiteProjectDocument);
-        List<WebPageDocument> pageEntities = WebMapper.mapToPageEntities(event.getCrawlData().getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
+        List<WebPageDocument> pageEntities = WebMapper.mapToPageEntities(event.crawlData().getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
         pageRepository.saveAll(pageEntities);
-        BrokenPagesReportDocument brokenPagesReportDocument = this.mapToBrokenPageReport(event.getCrawlData().getBrokenWebPages(), websiteProjectDocument.getId());
+        BrokenPagesReportDocument brokenPagesReportDocument = this.mapToBrokenPageReport(event.crawlData().getBrokenWebPages(), websiteProjectDocument.getId());
         reportDocumentRepository.save(brokenPagesReportDocument);
-        log.info("Report for website {} has been successfully saved.", event.getCrawlData().getWebsite().getDomain());
+        log.info("Report for website {} has been successfully saved.", event.crawlData().getWebsite().domain());
     }
     
     public  BrokenPagesReportDocument mapToBrokenPageReport(List<BrokenWebPage> brokenWebPages, String websiteProjectId) {

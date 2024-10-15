@@ -35,9 +35,9 @@ public class WebMapper {
         WebsiteProjectDocument websiteProjectDocument = new WebsiteProjectDocument();
         Website website = crawlData.getWebsite();
         websiteProjectDocument.setId(crawlData.getId());
-        websiteProjectDocument.setInitialUrl(website.getStartUrl());
-        websiteProjectDocument.setDomain(website.getDomain());
-        websiteProjectDocument.setName(website.getProjectName());
+        websiteProjectDocument.setInitialUrl(website.startUrl());
+        websiteProjectDocument.setDomain(website.domain());
+        websiteProjectDocument.setName(website.projectName());
         websiteProjectDocument.setCrawledPages(crawlData.getCrawledPages().size());
         return websiteProjectDocument;
     }

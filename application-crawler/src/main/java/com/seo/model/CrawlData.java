@@ -17,22 +17,16 @@ import java.util.Map;
 public class CrawlData {
     private final String id;
     private final Website website;
+    @Getter
     private final BlockingQueue<WebPage> internalLinks = new LinkedBlockingDeque<>();
     private final Set<WebPage> externalLinks = new HashSet<>();
+    @Getter
     private final List<BrokenWebPage> brokenWebPages = Collections.synchronizedList(new ArrayList<>());
     @Getter
     private final Map<String, WebPage> crawledPages = new ConcurrentHashMap<>();
     
     private final Object externalLinkMonitor = new Object();
     private final Object websiteMonitor = new Object();
-    
-    public BlockingQueue<WebPage> getInternalLinks() {
-        return internalLinks;
-    }
-    
-    public List<BrokenWebPage> getBrokenWebPages() {
-        return brokenWebPages;
-    }
 
     public Set<WebPage> getExternalLinks() {
         synchronized (externalLinkMonitor) {
