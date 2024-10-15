@@ -1,4 +1,4 @@
-package com.experimental.webcrawler;
+package com.seo.webcrawler;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
