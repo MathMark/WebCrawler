@@ -7,13 +7,13 @@ import com.seo.crawl.CrawlResponse;
 import com.seo.crawl.CrawlStatus;
 import com.seo.crawler.CrawlCompleteListener;
 import com.seo.crawler.impl.CrawlTask;
+import com.seo.exception.TaskNotFoundException;
 import com.seo.model.BrokenWebPage;
 import com.seo.model.Content;
 import com.seo.model.Link;
 import com.seo.model.WebPage;
 import com.seo.model.Website;
 
-import com.seo.exception.TaskNotFoundException;
 import com.seo.model.CrawlData;
 import com.seo.model.document.IncomingLinkDocument;
 import com.seo.model.report.BrokenPagesReportDocument;
