@@ -20,3 +20,9 @@ You can also start the app without using containers. To do this:
   <li>Run the app:</li>
   <i>java -jar webcrawler-0.0.1-SNAPSHOT.jar</i>
 </ol>
+
+
+Issues:
+
+1. Maven doesn't find imported class from another module but Intellij does
+Make sure all plugins in the root .pom file are wrapped in pluginManagement tag.
