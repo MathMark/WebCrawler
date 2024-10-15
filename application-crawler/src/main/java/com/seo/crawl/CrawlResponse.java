@@ -1,4 +1,4 @@
-package com.seo.dto.crawl;
+package com.seo.crawl;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

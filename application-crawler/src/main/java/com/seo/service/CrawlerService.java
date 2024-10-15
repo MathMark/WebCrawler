@@ -1,16 +1,21 @@
 package com.seo.service;
 
+import com.seo.ContentEntity;
+import com.seo.crawl.BasicCrawlStatus;
+import com.seo.crawl.CrawlRequest;
+import com.seo.crawl.CrawlResponse;
+import com.seo.crawl.CrawlStatus;
 import com.seo.crawler.CrawlCompleteListener;
 import com.seo.crawler.impl.CrawlTask;
 import com.seo.model.BrokenWebPage;
+import com.seo.model.Content;
+import com.seo.model.Link;
+import com.seo.model.WebPage;
 import com.seo.model.Website;
-import com.seo.dto.crawl.BasicCrawlStatus;
-import com.seo.dto.crawl.CrawlRequest;
-import com.seo.dto.crawl.CrawlResponse;
-import com.seo.dto.crawl.CrawlStatus;
+
 import com.seo.exception.TaskNotFoundException;
 import com.seo.model.CrawlData;
-import com.seo.mapper.WebMapper;
+import com.seo.model.document.IncomingLinkDocument;
 import com.seo.model.report.BrokenPagesReportDocument;
 import com.seo.model.document.WebPageDocument;
 import com.seo.model.document.WebsiteProjectDocument;
@@ -126,9 +131,9 @@ public class CrawlerService implements CrawlCompleteListener {
 
     @Override
     public void onCrawlCompete(CrawlCompletedEvent event) {
-        WebsiteProjectDocument websiteProjectDocument = WebMapper.mapToWebsiteProject(event.crawlData());
+        WebsiteProjectDocument websiteProjectDocument = mapToWebsiteProject(event.crawlData());
         websiteProjectRepository.save(websiteProjectDocument);
-        List<WebPageDocument> pageEntities = WebMapper.mapToPageEntities(event.crawlData().getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
+        List<WebPageDocument> pageEntities = mapToPageEntities(event.crawlData().getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
         pageRepository.saveAll(pageEntities);
         BrokenPagesReportDocument brokenPagesReportDocument = this.mapToBrokenPageReport(event.crawlData().getBrokenWebPages(), websiteProjectDocument.getId());
         reportDocumentRepository.save(brokenPagesReportDocument);
@@ -157,5 +162,51 @@ public class CrawlerService implements CrawlCompleteListener {
         brokenPageEntity.setTextAttribute(null);
         brokenPageEntity.setStatusCode(brokenWebPage.getStatusCode());
         return brokenPageEntity;
+    }
+    
+    private WebsiteProjectDocument mapToWebsiteProject(CrawlData crawlData) {
+        WebsiteProjectDocument websiteProjectDocument = new WebsiteProjectDocument();
+        Website website = crawlData.getWebsite();
+        websiteProjectDocument.setId(crawlData.getId());
+        websiteProjectDocument.setInitialUrl(website.startUrl());
+        websiteProjectDocument.setDomain(website.domain());
+        websiteProjectDocument.setName(website.projectName());
+        websiteProjectDocument.setCrawledPages(crawlData.getCrawledPages().size());
+        return websiteProjectDocument;
+    }
+
+    private List<WebPageDocument> mapToPageEntities(List<WebPage> pages, String websiteProjectId) {
+        return pages.stream().map(p -> mapToPageEntity(p, websiteProjectId)).collect(Collectors.toList());
+    }
+    
+    private  WebPageDocument mapToPageEntity(WebPage webPage, String webProjectId) {
+        List<IncomingLinkDocument> incomingLinkDocuments = webPage.getIncomingLinks().stream().map(this::mapToLinkEntity).collect(Collectors.toList());
+        return WebPageDocument.builder().url(webPage.getUrl())
+                .content(mapToContentEntity(webPage.getContent()))
+                .incomingLinkDocuments(incomingLinkDocuments)
+                .webProjectId(webProjectId).build();
+    }
+    
+    private IncomingLinkDocument mapToLinkEntity(Link link) {
+        IncomingLinkDocument incomingLinkDocument = new IncomingLinkDocument();
+        incomingLinkDocument.setUrl(link.getUrl());
+        incomingLinkDocument.setHrefText(link.getHrefText());
+        return incomingLinkDocument;
+    }
+    
+    private ContentEntity mapToContentEntity(Content content) {
+        if (content != null) {
+            return ContentEntity.builder()
+                    .h1(content.getH1())
+                    .h2(content.getH2())
+                    .h3(content.getH3())
+                    .h4(content.getH4())
+                    .h5(content.getH5())
+                    .h6(content.getH6())
+                    .metaDescription(content.getMetaDescription())
+                    .metaRobots(content.getMetaRobots())
+                    .title(content.getTitle()).build();
+        }
+        return null;
     }
 }

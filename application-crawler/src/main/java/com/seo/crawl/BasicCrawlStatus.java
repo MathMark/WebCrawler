@@ -1,4 +1,4 @@
-package com.seo.dto.crawl;
+package com.seo.crawl;
 
 import com.seo.crawler.impl.CrawlTask;
 import lombok.AllArgsConstructor;
@@ -10,11 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Builder
-public class CrawlStatus {
-    private String projectName;
+public class BasicCrawlStatus {
+    private String taskId;
     private String domain;
-    private long crawledPages;
-    private long remainedPages;
-    private long brokenPagesCount;
+    private String projectName;
     private CrawlTask.Status status;
 }

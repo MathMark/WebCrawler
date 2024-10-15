@@ -2,7 +2,6 @@ package com.seo.service;
 
 import com.seo.dto.PageInfo;
 import com.seo.dto.page.WebPageDto;
-import com.seo.mapper.WebMapper;
 import com.seo.model.document.WebPageDocument;
 import com.seo.repository.PageRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,7 @@ public class PageService {
         Pageable pageable = createPageable(pagingForm);
         long total = pageRepository.countAllByWebProjectId(websiteProjectId);
         Page<WebPageDocument> pageEntities = pageRepository.findAllByWebProjectIdLike(websiteProjectId, pageable);
-        List<WebPageDto> pages = pageEntities.stream().map(WebMapper::mapToPageDto).collect(Collectors.toList());
+        List<WebPageDto> pages = pageEntities.stream().map(this::mapToPageDto).collect(Collectors.toList());
         return new PageImpl<>(pages, pageable, total);
     }
     
@@ -35,5 +34,14 @@ public class PageService {
             throw new IllegalArgumentException(String.format("Page must not contain more than %s elements.", PAGE_SIZE_LIMIT));
         }
         return PageRequest.of(pageInfo.getPageNumber(), pageInfo.getPageSize());
+    }
+    
+    private WebPageDto mapToPageDto(WebPageDocument webPageDocument) {
+        WebPageDto webPageDto = new WebPageDto();
+//        webPageDto.setTitle(webPageDocument.getTitle());
+//        webPageDto.setDescription(webPageDocument.getDescription());
+//        webPageDto.setRobotsContent(webPageDocument.getRobotsContent());
+        webPageDto.setUrl(webPageDocument.getUrl());
+        return webPageDto;
     }
 }

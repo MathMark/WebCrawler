@@ -1,9 +1,9 @@
 package com.seo;
 
-import com.seo.dto.crawl.BasicCrawlStatus;
-import com.seo.dto.crawl.CrawlRequest;
-import com.seo.dto.crawl.CrawlResponse;
-import com.seo.dto.crawl.CrawlStatus;
+import com.seo.crawl.BasicCrawlStatus;
+import com.seo.crawl.CrawlRequest;
+import com.seo.crawl.CrawlResponse;
+import com.seo.crawl.CrawlStatus;
 import com.seo.dto.error.ErrorResponseDto;
 import com.seo.service.CrawlerService;
 import io.swagger.v3.oas.annotations.Operation;
