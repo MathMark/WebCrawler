@@ -1,7 +1,7 @@
 package com.seo.config;
 
-import com.seo.crawler.CrawlClient;
-import com.seo.crawler.impl.ConnectionClient;
+import com.seo.crawler.ConnectionClient;
+import com.seo.crawler.impl.DefaultConnectionClient;
 import com.seo.parser.impl.ContentParser;
 import com.seo.parser.Parser;
 import com.seo.model.CrawlData;
@@ -25,9 +25,9 @@ public class AppConfig {
 
     @Bean
     @Scope(BeanDefinition.SCOPE_PROTOTYPE)
-    public CrawlClient crawlClientImpl() {
+    public ConnectionClient crawlClientImpl() {
         HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
-        return new ConnectionClient(httpClient);
+        return new DefaultConnectionClient(httpClient);
     }
 
     @Bean

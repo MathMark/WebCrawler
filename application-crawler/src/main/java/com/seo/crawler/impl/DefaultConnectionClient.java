@@ -1,6 +1,6 @@
 package com.seo.crawler.impl;
 
-import com.seo.crawler.CrawlClient;
+import com.seo.crawler.ConnectionClient;
 import com.seo.model.ConnectionResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +20,11 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
-public class ConnectionClient implements CrawlClient {
+public class DefaultConnectionClient implements ConnectionClient {
 
     private final ConnectionProvider connectionProvider;
 
-
-    public ConnectionClient(HttpClient httpClient) {
+    public DefaultConnectionClient(HttpClient httpClient) {
         this.connectionProvider = new ConnectionProvider(httpClient);
     }
 

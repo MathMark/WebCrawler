@@ -2,11 +2,9 @@ package com.seo.crawler.impl;
 
 import com.seo.crawler.CompletableRunnable;
 import com.seo.dto.response.AuditStatus;
-import com.seo.crawler.CrawlClient;
-import com.seo.crawler.CrawlCompleteListener;
+import com.seo.crawler.ConnectionClient;
 import com.seo.crawler.CrawlExecutor;
 import com.seo.parser.Parser;
-import com.seo.crawler.event.CrawlCompletedEvent;
 import com.seo.model.ConnectionResponse;
 import com.seo.model.WebPage;
 import com.seo.model.CrawlData;
@@ -22,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -36,27 +35,24 @@ public class CrawlTask implements CrawlExecutor {
     private final Parser parser;
     private ExecutorService executorService;
     @Autowired
-    private ObjectProvider<CrawlClient> crawlClientProvider;
+    private ObjectProvider<ConnectionClient> crawlClientProvider;
 
     @Getter
     private final CrawlData crawlData;
 
     @Getter
     private AuditStatus.Status status;
-
-    private final List<CrawlCompleteListener> listeners = Collections.synchronizedList(new ArrayList<>());
+    
     private final List<CompletableRunnable> threads = Collections.synchronizedList(new ArrayList<>());
     private CountDownLatch countDownLatch;
 
-    @Override
-    public void run() {
-        crawl();
+    public CompletableFuture<CrawlData> asyncCrawl() {
+        return CompletableFuture.supplyAsync(() -> {
+            crawl();
+            return crawlData;
+        });
     }
-
-    public void addListener(CrawlCompleteListener listener) {
-        listeners.add(listener);
-    }
-
+    
     @Override
     public void requestToStop() {
         log.info("Crawling requested to stop.");
@@ -92,7 +88,6 @@ public class CrawlTask implements CrawlExecutor {
                     Thread.currentThread().interrupt();
                 }
             }
-            notifyListeners();
         }
     }
 
@@ -100,7 +95,7 @@ public class CrawlTask implements CrawlExecutor {
         WebPage pageToCrawl = new WebPage();
         String startUrl = this.crawlData.getWebsite().startUrl();
         pageToCrawl.setUrl(startUrl);
-        CrawlClient crawlClient = crawlClientProvider.getObject();
+        ConnectionClient crawlClient = crawlClientProvider.getObject();
         Optional<ConnectionResponse> connectionResponseOptional = crawlClient.connect(startUrl);
         if (connectionResponseOptional.isEmpty()) {
             return;
@@ -131,22 +126,13 @@ public class CrawlTask implements CrawlExecutor {
     private void initiateThreads(Collection<WebPage> initialPages, int threadsCount) {
         countDownLatch = new CountDownLatch(threadsCount);
         for (WebPage startLink : initialPages) {
-            CrawlClient crawlClient = crawlClientProvider.getObject();
-            CompletableRunnable thread = new CrawlThread(startLink, this.crawlData, parser, crawlClient, countDownLatch);
+            ConnectionClient connectionClient = crawlClientProvider.getObject();
+            CompletableRunnable thread = new CrawlThread(startLink, this.crawlData, parser, connectionClient, countDownLatch);
             threads.add(thread);
             executorService.execute(thread);
         }
         status = AuditStatus.Status.RUNNING;
     }
+    
 
-    private void notifyListeners() {
-        for (CrawlCompleteListener listener : listeners) {
-            try {
-                CrawlCompletedEvent event = new CrawlCompletedEvent(crawlData);
-                listener.onCrawlCompete(event);
-            } catch (Exception e) {
-                log.error("Error notifying listener: {}", listener, e);
-            }
-        }
-    }
 }

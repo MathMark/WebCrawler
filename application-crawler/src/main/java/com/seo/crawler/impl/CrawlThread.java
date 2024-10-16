@@ -1,7 +1,7 @@
 package com.seo.crawler.impl;
 
 import com.seo.crawler.CompletableRunnable;
-import com.seo.crawler.CrawlClient;
+import com.seo.crawler.ConnectionClient;
 import com.seo.parser.Parser;
 import com.seo.model.BrokenWebPage;
 import com.seo.model.ConnectionResponse;
@@ -25,9 +25,8 @@ public class CrawlThread implements CompletableRunnable {
     private final CrawlData crawlData;
     private final AtomicBoolean isRequestedToStop = new AtomicBoolean();
     private final Parser parser;
-    private final CrawlClient crawlClient;
+    private final ConnectionClient connectionClient;
     private final CountDownLatch latch;
-    //TODO: Use separate http client for each thread!!!
 
     public synchronized void stop() {
         isRequestedToStop.set(true);
@@ -47,13 +46,13 @@ public class CrawlThread implements CompletableRunnable {
     @Override
     public void run() {
         isRequestedToStop.set(false);
-        Optional<ConnectionResponse> initConnectionResponse = crawlClient.connect(this.startPage.getUrl());
+        Optional<ConnectionResponse> initConnectionResponse = connectionClient.connect(this.startPage.getUrl());
         BlockingQueue<WebPage> queue = crawlData.getInternalLinks();
         initConnectionResponse.ifPresent(response -> {
             parser.parseLinks(this.startPage, response);
             while (!isStopped()) {
                 WebPage nextPage = queue.poll();
-                Optional<ConnectionResponse> connectionResponse = crawlClient.connect(nextPage.getUrl());
+                Optional<ConnectionResponse> connectionResponse = connectionClient.connect(nextPage.getUrl());
                 connectionResponse.ifPresent(nextPageResponse -> {
                     auditPage(nextPageResponse, nextPage);
                 });

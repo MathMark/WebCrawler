@@ -5,7 +5,6 @@ import com.seo.model.BasicCrawlStatus;
 import com.seo.dto.request.AuditRequest;
 import com.seo.dto.response.AuditResponse;
 import com.seo.dto.response.AuditStatus;
-import com.seo.crawler.CrawlCompleteListener;
 import com.seo.crawler.impl.CrawlTask;
 import com.seo.exception.TaskNotFoundException;
 import com.seo.model.BrokenWebPage;
@@ -25,7 +24,6 @@ import com.seo.repository.report.ReportDocumentRepository;
 
 import com.seo.repository.PageRepository;
 import com.seo.repository.ProjectRepository;
-import com.seo.crawler.event.CrawlCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -35,8 +33,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Map;
@@ -45,14 +42,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CrawlerService implements CrawlCompleteListener {
+public class CrawlerService {
 
     private final ObjectProvider<CrawlTask> objectProvider;
     private final ProjectRepository websiteProjectRepository;
     private final ReportDocumentRepository reportDocumentRepository;
     private final PageRepository pageRepository;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(2);
-
     private static final Pattern pattern = Pattern.compile("^(https?://[^/]+)");
     private final Map<String, CrawlTask> tasks = new HashMap<>();
 
@@ -69,9 +64,9 @@ public class CrawlerService implements CrawlCompleteListener {
         String dataId = UUID.randomUUID().toString();
         CrawlData data = new CrawlData(dataId, website);
         CrawlTask crawlTask = objectProvider.getObject(data, auditRequest.getThreadsCount());
-        crawlTask.addListener(this);
-        executorService.execute(crawlTask);
-
+  
+        CompletableFuture<CrawlData> completableFuture = crawlTask.asyncCrawl();
+        completableFuture.thenAccept(this::onCrawlCompete);
         String taskId = UUID.randomUUID().toString();
         tasks.put(taskId, crawlTask);
         return AuditResponse.builder()
@@ -131,15 +126,15 @@ public class CrawlerService implements CrawlCompleteListener {
         return StringUtils.EMPTY;
     }
 
-    @Override
-    public void onCrawlCompete(CrawlCompletedEvent event) {
-        WebsiteProjectDocument websiteProjectDocument = Mapper.mapToWebsiteProject(event.crawlData());
+    
+    public void onCrawlCompete(CrawlData crawlData) {
+        WebsiteProjectDocument websiteProjectDocument = Mapper.mapToWebsiteProject(crawlData);
         websiteProjectRepository.save(websiteProjectDocument);
-        List<WebPageDocument> pageEntities = Mapper.mapToPageEntities(event.crawlData().getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
+        List<WebPageDocument> pageEntities = Mapper.mapToPageEntities(crawlData.getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
         pageRepository.saveAll(pageEntities);
-        BrokenPagesReportDocument brokenPagesReportDocument = Mapper.mapToBrokenPageReport(event.crawlData().getBrokenWebPages(), websiteProjectDocument.getId());
+        BrokenPagesReportDocument brokenPagesReportDocument = Mapper.mapToBrokenPageReport(crawlData.getBrokenWebPages(), websiteProjectDocument.getId());
         reportDocumentRepository.save(brokenPagesReportDocument);
-        log.info("Report for website {} has been successfully saved.", event.crawlData().getWebsite().domain());
+        log.info("Report for website {} has been successfully saved.", crawlData.getWebsite().domain());
     }
 
     private static class Mapper {

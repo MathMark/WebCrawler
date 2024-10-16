@@ -1,5 +1,5 @@
 package com.seo.crawler;
 
-public interface CrawlExecutor extends Runnable {
+public interface CrawlExecutor {
     void requestToStop();
 }
