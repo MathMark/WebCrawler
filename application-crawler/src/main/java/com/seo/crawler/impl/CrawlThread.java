@@ -1,7 +1,6 @@
 package com.seo.crawler.impl;
 
 import com.seo.crawler.CompletableRunnable;
-import com.seo.parser.ContentParser;
 import com.seo.crawler.CrawlClient;
 import com.seo.parser.Parser;
 import com.seo.model.BrokenWebPage;
@@ -26,7 +25,6 @@ public class CrawlThread implements CompletableRunnable {
     private final CrawlData crawlData;
     private final AtomicBoolean isRequestedToStop = new AtomicBoolean();
     private final Parser parser;
-    private final ContentParser contentParser;
     private final CrawlClient crawlClient;
     private final CountDownLatch latch;
     //TODO: Use separate http client for each thread!!!
@@ -83,7 +81,7 @@ public class CrawlThread implements CompletableRunnable {
             crawlData.getBrokenWebPages().add(brokenWebPage);
         } else {
             parser.parseLinks(webPage, connectionResponse);
-            Content content = contentParser.parseContent(connectionResponse.getHtmlBody());
+            Content content = parser.parseContent(connectionResponse.getHtmlBody());
             webPage.setContent(content);
         }
     }

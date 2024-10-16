@@ -2,7 +2,6 @@ package com.seo.crawler.impl;
 
 import com.seo.crawler.CompletableRunnable;
 import com.seo.dto.response.AuditStatus;
-import com.seo.parser.ContentParser;
 import com.seo.crawler.CrawlClient;
 import com.seo.crawler.CrawlCompleteListener;
 import com.seo.crawler.CrawlExecutor;
@@ -35,7 +34,6 @@ public class CrawlTask implements CrawlExecutor {
     private ObjectProvider<ExecutorService> executorServiceProvider;
     private final int threadCount;
     private final Parser parser;
-    private final ContentParser contentParser;
     private ExecutorService executorService;
     private final CrawlClient crawlClient;
 
@@ -128,7 +126,7 @@ public class CrawlTask implements CrawlExecutor {
     private void initiateThreads(Collection<WebPage> initialPages, int threadsCount) {
         countDownLatch = new CountDownLatch(threadsCount);
         for (WebPage startLink : initialPages) {
-            CompletableRunnable thread = new CrawlThread(startLink, this.crawlData, parser, contentParser, crawlClient, countDownLatch);
+            CompletableRunnable thread = new CrawlThread(startLink, this.crawlData, parser, crawlClient, countDownLatch);
             threads.add(thread);
             executorService.execute(thread);
         }

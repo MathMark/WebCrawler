@@ -2,10 +2,8 @@ package com.seo.config;
 
 import com.seo.crawler.CrawlClient;
 import com.seo.crawler.impl.CrawlClientImpl;
-import com.seo.parser.impl.ContentParserImpl;
 import com.seo.parser.impl.LinkParser;
 import com.seo.parser.Parser;
-import com.seo.parser.ContentParser;
 import com.seo.model.CrawlData;
 import com.seo.crawler.impl.CrawlTask;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -29,12 +27,7 @@ public class AppConfig {
     public CrawlClient crawlClientImpl() {
         return new CrawlClientImpl(httpClient());
     }
-
-    @Bean
-    public ContentParser contentParserImpl() {
-        return new ContentParserImpl();
-    }
-
+    
     @Bean
     @Scope(BeanDefinition.SCOPE_PROTOTYPE)
     public Parser webParser(CrawlData crawlData) {
@@ -44,7 +37,7 @@ public class AppConfig {
     @Bean
     @Scope(BeanDefinition.SCOPE_PROTOTYPE)
     public CrawlTask crawlTask(CrawlData crawlData, int threadsCount) {
-        return new CrawlTask(threadsCount, webParser(crawlData), contentParserImpl(), crawlClientImpl(), crawlData);
+        return new CrawlTask(threadsCount, webParser(crawlData), crawlClientImpl(), crawlData);
     }
 
     @Bean
