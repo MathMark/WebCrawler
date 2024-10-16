@@ -1,4 +1,4 @@
-package com.seo.dto.report;
+package com.seo.dto.response.report;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,6 +1,7 @@
 package com.seo.crawler.impl;
 
 import com.seo.crawler.CompletableRunnable;
+import com.seo.dto.response.AuditStatus;
 import com.seo.parser.ContentParser;
 import com.seo.crawler.CrawlClient;
 import com.seo.crawler.CrawlCompleteListener;
@@ -36,7 +37,7 @@ public class CrawlTask implements CrawlExecutor {
     private ExecutorService executorService;
     private final CrawlClient crawlClient;
     @Getter
-    private Status status;
+    private AuditStatus.Status status;
     private final List<CrawlCompleteListener> listeners = new ArrayList<>();
     private final List<CompletableRunnable> threads = new ArrayList<>();
     private CountDownLatch countDownLatch;
@@ -65,7 +66,7 @@ public class CrawlTask implements CrawlExecutor {
                 .limit(computedThreadsCount)
                 .toList();
         if (startLinks.isEmpty()) {
-            status = Status.ERROR;
+            status = AuditStatus.Status.ERROR;
             log.error("Couldn't find amy links on start page.");
             return;
         } else if (startLinks.size() < computedThreadsCount) {
@@ -80,7 +81,7 @@ public class CrawlTask implements CrawlExecutor {
             executorService.execute(thread);
         }
 
-        status = Status.RUNNING;
+        status = AuditStatus.Status.RUNNING;
         complete();
     }
 
@@ -108,7 +109,7 @@ public class CrawlTask implements CrawlExecutor {
                 log.error("Crawling completion has been interrupted.", e);
                 Thread.currentThread().interrupt();
             }
-            status = Status.STOPPED;
+            status = AuditStatus.Status.STOPPED;
             if (executorService != null && !executorService.isShutdown()) {
                 executorService.shutdown();
             }
@@ -124,9 +125,5 @@ public class CrawlTask implements CrawlExecutor {
     }
 
     
-    public enum Status {
-        RUNNING,
-        STOPPED,
-        ERROR
-    }
+    
 }

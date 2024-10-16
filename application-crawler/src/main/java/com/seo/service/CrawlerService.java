@@ -2,9 +2,9 @@ package com.seo.service;
 
 import com.seo.ContentEntity;
 import com.seo.model.BasicCrawlStatus;
-import com.seo.model.CrawlRequest;
-import com.seo.model.CrawlResponse;
-import com.seo.model.CrawlStatus;
+import com.seo.dto.request.AuditRequest;
+import com.seo.dto.response.AuditResponse;
+import com.seo.dto.response.AuditStatus;
 import com.seo.crawler.CrawlCompleteListener;
 import com.seo.crawler.impl.CrawlTask;
 import com.seo.exception.TaskNotFoundException;
@@ -64,18 +64,18 @@ public class CrawlerService implements CrawlCompleteListener {
                 .status(e.getValue().getStatus()).build()).collect(Collectors.toList());
     }
 
-    public CrawlResponse startCrawling(CrawlRequest crawlRequest) {
-        Website website = generateWebsiteProject(crawlRequest);
+    public AuditResponse startCrawling(AuditRequest auditRequest) {
+        Website website = generateWebsiteProject(auditRequest);
         String dataId = UUID.randomUUID().toString();
         CrawlData data = new CrawlData(dataId, website);
-        CrawlTask crawlTask = objectProvider.getObject(data, crawlRequest.getThreadsCount());
+        CrawlTask crawlTask = objectProvider.getObject(data, auditRequest.getThreadsCount());
         crawlTask.addListener(this);
         executorService.execute(crawlTask);
 
         String taskId = UUID.randomUUID().toString();
         tasks.put(taskId, crawlTask);
-        return CrawlResponse.builder()
-                .initialUrl(crawlRequest.getStartUrl())
+        return AuditResponse.builder()
+                .initialUri(auditRequest.getStartUri())
                 .domain(website.domain())
                 .taskId(taskId)
                 .websiteProjectId(dataId)
@@ -83,7 +83,7 @@ public class CrawlerService implements CrawlCompleteListener {
                 .build();
     }
 
-    public CrawlStatus getCrawlStatus(String taskId) {
+    public AuditStatus getCrawlStatus(String taskId) {
         CrawlTask crawlTask = tasks.get(taskId);
         if (crawlTask == null) {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
@@ -91,7 +91,7 @@ public class CrawlerService implements CrawlCompleteListener {
         return createCrawlStatus(crawlTask);
     }
 
-    public CrawlStatus stopCrawling(String taskId) {
+    public AuditStatus stopCrawling(String taskId) {
         CrawlTask crawlTask = tasks.get(taskId);
         if (crawlTask == null) {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
@@ -100,23 +100,23 @@ public class CrawlerService implements CrawlCompleteListener {
         return createCrawlStatus(crawlTask);
     }
 
-    private CrawlStatus createCrawlStatus(CrawlTask task) {
+    private AuditStatus createCrawlStatus(CrawlTask task) {
         CrawlData crawlData = task.getCrawlData();
         Website website = crawlData.getWebsite();
-        return CrawlStatus.builder()
+        return AuditStatus.builder()
                 .projectName(website.projectName())
                 .domain(website.domain())
-                .crawledPages(crawlData.getCrawledPages().size())
+                .auditedPages(crawlData.getCrawledPages().size())
                 .remainedPages(crawlData.getInternalLinks().size())
                 .brokenPagesCount(crawlData.getBrokenWebPages().size())
                 .status(task.getStatus())
                 .build();
     }
 
-    private Website generateWebsiteProject(CrawlRequest crawlRequest) {
-        String url = crawlRequest.getStartUrl();
+    private Website generateWebsiteProject(AuditRequest auditRequest) {
+        String url = auditRequest.getStartUri();
         String domain = cutDomain(url);
-        String projectName = crawlRequest.getProjectName();
+        String projectName = auditRequest.getProjectName();
         if (projectName == null || projectName.isBlank()) {
             projectName = domain;
         }

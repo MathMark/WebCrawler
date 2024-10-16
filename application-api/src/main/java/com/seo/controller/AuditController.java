@@ -1,12 +1,13 @@
 package com.seo.controller;
 
 import com.seo.model.BasicCrawlStatus;
-import com.seo.model.CrawlRequest;
-import com.seo.model.CrawlResponse;
-import com.seo.model.CrawlStatus;
+import com.seo.dto.request.AuditRequest;
+import com.seo.dto.response.AuditResponse;
+import com.seo.dto.response.AuditStatus;
 import com.seo.dto.error.ErrorResponseDto;
 import com.seo.service.CrawlerService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,21 +26,23 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @Tag(
-        name = "CRAWL",
-        description = "CRUD REST APIs for controlling crawling process."
+        name = "AUDIT",
+        description = "REST API for controlling audit process"
 )
 @RestController
-@RequestMapping("/crawl")
+@RequestMapping("/audit")
 @RequiredArgsConstructor
-public class CrawlController {
+public class AuditController {
 
     private final CrawlerService crawlerService;
 
     @Operation(
-            summary = "Start crawling",
-            description = "REST API to initiate crawling process"
+            summary = "Start audit",
+            description = "REST API to initiate website audit",
+            parameters = @Parameter(
+                    schema = @Schema(implementation = AuditRequest.class)
+            )
     )
-
     @ApiResponse(
             responseCode = "200",
             description = "HTTP Status OK"
@@ -52,43 +55,43 @@ public class CrawlController {
             )
     )
     @PostMapping("/start")
-    public ResponseEntity<CrawlResponse> startCrawl(@RequestBody @Valid CrawlRequest crawlRequest) {
-        CrawlResponse crawlResponse = crawlerService.startCrawling(crawlRequest);
-        return ResponseEntity.ok(crawlResponse);
+    public ResponseEntity<AuditResponse> startAudit(@RequestBody @Valid AuditRequest crawlRequest) {
+        AuditResponse auditResponse = crawlerService.startCrawling(crawlRequest);
+        return ResponseEntity.ok(auditResponse);
     }
 
     @Operation(
-            summary = "Get status",
-            description = "REST API to get status of a certain crawling process"
+            summary = "Get audit status",
+            description = "REST API to get status of a certain audit process"
     )
     @ApiResponse(
             responseCode = "200",
             description = "HTTP Status OK"
     )
     @GetMapping("/status/{taskId}")
-    public ResponseEntity<CrawlStatus> getCrawlStatus(@PathVariable String taskId) {
-        CrawlStatus crawlStatus = crawlerService.getCrawlStatus(taskId);
-        return ResponseEntity.ok(crawlStatus);
+    public ResponseEntity<AuditStatus> getAuditStatus(@PathVariable String taskId) {
+        AuditStatus auditStatus = crawlerService.getCrawlStatus(taskId);
+        return ResponseEntity.ok(auditStatus);
     }
 
 
     @Operation(
-            summary = "Stop crawling",
-            description = "REST API to stop a certain crawling process"
+            summary = "Stop audit",
+            description = "REST API to stop a certain audit process"
     )
     @ApiResponse(
             responseCode = "200",
             description = "HTTP Status OK"
     )
     @GetMapping("/stop/{taskId}")
-    public ResponseEntity<CrawlStatus> stopCrawl(@PathVariable String taskId) {
-        CrawlStatus crawlStatus = crawlerService.stopCrawling(taskId);
-        return ResponseEntity.ok(crawlStatus);
+    public ResponseEntity<AuditStatus> stopAudit(@PathVariable String taskId) {
+        AuditStatus auditStatus = crawlerService.stopCrawling(taskId);
+        return ResponseEntity.ok(auditStatus);
     }
 
     @Operation(
             summary = "Get all",
-            description = "REST API to get all initiated crawling processes."
+            description = "REST API to get all initiated audit processes."
     )
     @ApiResponse(
             responseCode = "200",

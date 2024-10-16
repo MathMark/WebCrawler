@@ -1,6 +1,6 @@
 package com.seo.model;
 
-import com.seo.crawler.impl.CrawlTask;
+import com.seo.dto.response.AuditStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,5 +14,5 @@ public class BasicCrawlStatus {
     private String taskId;
     private String domain;
     private String projectName;
-    private CrawlTask.Status status;
+    private AuditStatus.Status status;
 }

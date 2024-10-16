@@ -26,7 +26,7 @@ public class ConnectionResponse {
         IMG("img/jpg"),
         UNSUPPORTED_OR_UNKNOWN("unsupported/unknown");
         
-        String name;
+        final String name;
         
         private static final Map<String, ContentType> CONTENT_TYPE_MAP = new HashMap<>();
         

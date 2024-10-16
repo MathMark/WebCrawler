@@ -1,8 +1,8 @@
 package com.seo.service;
 
-import com.seo.dto.report.BrokenPagesReportResponse;
-import com.seo.dto.report.IncomingLinkResponse;
-import com.seo.dto.report.ReportDto;
+import com.seo.dto.response.report.BrokenPagesReportResponse;
+import com.seo.dto.response.report.IncomingLinkResponse;
+import com.seo.dto.response.report.ReportDto;
 import com.seo.model.report.BaseReportDocument;
 import com.seo.model.report.BrokenPagesReportDocument;
 import com.seo.model.report.EmptyTitleReportDocument;
