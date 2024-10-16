@@ -2,6 +2,8 @@ package com.seo.crawler;
 
 import com.seo.model.ConnectionResponse;
 
+import java.util.Optional;
+
 public interface CrawlClient {
-    ConnectionResponse connect(String uri);
+    Optional<ConnectionResponse> connect(String uri);
 }

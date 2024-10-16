@@ -18,14 +18,16 @@ import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
-public class LinkParser implements Parser {
-
+public class ContentParser implements Parser {
+    private final CrawlData crawlData;
     private static final String A_TAG = "a[href]";
     private static final String HREF_ATTRIBUTE = "href";
     private static final String ANCHOR_LINK = "#";
     private static final String GET_PARAM = "?";
-    
-    private final CrawlData crawlData;
+    private static final String ROBOTS_QUERY = "meta[name=robots]";
+    private static final String DESCRIPTION_QUERY = "meta[name=description]";
+    private static final String CONTENT_ATTRIBUTE = "content";
+
 
     @Override
     public void parseLinks(WebPage webPage, ConnectionResponse connectionResponse) {
@@ -71,10 +73,7 @@ public class LinkParser implements Parser {
         }
         return url;
     }
-    
-    private static final String ROBOTS_QUERY = "meta[name=robots]";
-    private static final String DESCRIPTION_QUERY = "meta[name=description]";
-    private static final String CONTENT_ATTRIBUTE = "content";
+
 
     @Override
     public Content parseContent(String htmlSource) {

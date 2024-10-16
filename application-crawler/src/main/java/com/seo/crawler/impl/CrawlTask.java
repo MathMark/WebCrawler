@@ -35,7 +35,8 @@ public class CrawlTask implements CrawlExecutor {
     private final int threadCount;
     private final Parser parser;
     private ExecutorService executorService;
-    private final CrawlClient crawlClient;
+    @Autowired
+    private ObjectProvider<CrawlClient> crawlClientProvider;
 
     @Getter
     private final CrawlData crawlData;
@@ -99,8 +100,12 @@ public class CrawlTask implements CrawlExecutor {
         WebPage pageToCrawl = new WebPage();
         String startUrl = this.crawlData.getWebsite().startUrl();
         pageToCrawl.setUrl(startUrl);
-        ConnectionResponse connectionResponse = crawlClient.connect(startUrl);
-        parser.parseLinks(pageToCrawl, connectionResponse);
+        CrawlClient crawlClient = crawlClientProvider.getObject();
+        Optional<ConnectionResponse> connectionResponseOptional = crawlClient.connect(startUrl);
+        if (connectionResponseOptional.isEmpty()) {
+            return;
+        }
+        parser.parseLinks(pageToCrawl, connectionResponseOptional.get());
 
         BlockingQueue<WebPage> internalLinks = crawlData.getInternalLinks();
         Optional<Integer> computedThreadsCountOptional = computeNumberOfThreads(internalLinks);
@@ -126,6 +131,7 @@ public class CrawlTask implements CrawlExecutor {
     private void initiateThreads(Collection<WebPage> initialPages, int threadsCount) {
         countDownLatch = new CountDownLatch(threadsCount);
         for (WebPage startLink : initialPages) {
+            CrawlClient crawlClient = crawlClientProvider.getObject();
             CompletableRunnable thread = new CrawlThread(startLink, this.crawlData, parser, crawlClient, countDownLatch);
             threads.add(thread);
             executorService.execute(thread);

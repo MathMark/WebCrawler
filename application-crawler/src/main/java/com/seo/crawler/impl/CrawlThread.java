@@ -47,13 +47,13 @@ public class CrawlThread implements CompletableRunnable {
     @Override
     public void run() {
         isRequestedToStop.set(false);
-        Optional<ConnectionResponse> initConnectionResponse = connect(this.startPage.getUrl());
+        Optional<ConnectionResponse> initConnectionResponse = crawlClient.connect(this.startPage.getUrl());
         BlockingQueue<WebPage> queue = crawlData.getInternalLinks();
         initConnectionResponse.ifPresent(response -> {
             parser.parseLinks(this.startPage, response);
             while (!isStopped()) {
                 WebPage nextPage = queue.poll();
-                Optional<ConnectionResponse> connectionResponse = connect(nextPage.getUrl());
+                Optional<ConnectionResponse> connectionResponse = crawlClient.connect(nextPage.getUrl());
                 connectionResponse.ifPresent(nextPageResponse -> {
                     auditPage(nextPageResponse, nextPage);
                 });
@@ -62,14 +62,6 @@ public class CrawlThread implements CompletableRunnable {
 
         latch.countDown();
         log.info("Thread {} exited", Thread.currentThread().getName());
-    }
-
-    private Optional<ConnectionResponse> connect(String uri) {
-        try {
-            return Optional.of(crawlClient.connect(uri));
-        } catch (Exception e) {
-            return Optional.empty();
-        }
     }
 
     private void auditPage(ConnectionResponse connectionResponse, WebPage webPage) {
