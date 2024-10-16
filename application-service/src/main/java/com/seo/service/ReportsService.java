@@ -1,8 +1,8 @@
 package com.seo.service;
 
-import com.seo.dto.report.BrokenPagesReportResponse;
-import com.seo.dto.report.IncomingLinkResponse;
-import com.seo.dto.report.ReportDto;
+import com.seo.dto.response.report.BrokenPagesReportResponse;
+import com.seo.dto.response.report.IncomingLinkResponse;
+import com.seo.dto.response.report.ReportDto;
 import com.seo.model.report.BaseReportDocument;
 import com.seo.model.report.BrokenPagesReportDocument;
 import com.seo.model.report.EmptyTitleReportDocument;
@@ -62,14 +62,14 @@ public class ReportsService {
         List<BrokenPageEntity> brokenPageEntityList = brokenPagesReportDocument.getBrokenPages();
         return brokenPageEntityList.stream().map(bp -> {
             BrokenPagesReportResponse response = new BrokenPagesReportResponse();
-            response.setUrl(bp.getUrl());
+            response.setUri(bp.getUrl());
             response.setIncomingLinks(bp.getIncomingLinks().stream().map(link -> {
                 IncomingLinkResponse linkResponse = new IncomingLinkResponse();
-                linkResponse.setHrefText(link.getHrefText());
+                //linkResponse.setHrefText(link.getHrefText());
                 linkResponse.setUrl(link.getUrl());
                 return linkResponse;
             }).toList());
-            response.setTextAttribute(bp.getTextAttribute());
+            //response.setTextAttribute(bp.getTextAttribute());
             response.setStatusCode(bp.getStatusCode());
             return response;
         }).collect(Collectors.toList());

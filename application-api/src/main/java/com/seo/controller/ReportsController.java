@@ -1,7 +1,7 @@
 package com.seo.controller;
 
-import com.seo.dto.report.BrokenPagesReportResponse;
-import com.seo.dto.report.ReportDto;
+import com.seo.dto.response.report.BrokenPagesReportResponse;
+import com.seo.dto.response.report.ReportDto;
 import com.seo.service.ReportsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

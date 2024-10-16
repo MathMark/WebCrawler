@@ -2,10 +2,9 @@ package com.seo.service;
 
 import com.seo.ContentEntity;
 import com.seo.model.BasicCrawlStatus;
-import com.seo.model.CrawlRequest;
-import com.seo.model.CrawlResponse;
-import com.seo.model.CrawlStatus;
-import com.seo.crawler.CrawlCompleteListener;
+import com.seo.dto.request.AuditRequest;
+import com.seo.dto.response.AuditResponse;
+import com.seo.dto.response.AuditStatus;
 import com.seo.crawler.impl.CrawlTask;
 import com.seo.exception.TaskNotFoundException;
 import com.seo.model.BrokenWebPage;
@@ -25,7 +24,6 @@ import com.seo.repository.report.ReportDocumentRepository;
 
 import com.seo.repository.PageRepository;
 import com.seo.repository.ProjectRepository;
-import com.seo.crawler.event.CrawlCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -35,8 +33,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Map;
@@ -45,14 +42,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CrawlerService implements CrawlCompleteListener {
+public class CrawlerService {
 
     private final ObjectProvider<CrawlTask> objectProvider;
     private final ProjectRepository websiteProjectRepository;
     private final ReportDocumentRepository reportDocumentRepository;
     private final PageRepository pageRepository;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(2);
-
     private static final Pattern pattern = Pattern.compile("^(https?://[^/]+)");
     private final Map<String, CrawlTask> tasks = new HashMap<>();
 
@@ -64,18 +59,18 @@ public class CrawlerService implements CrawlCompleteListener {
                 .status(e.getValue().getStatus()).build()).collect(Collectors.toList());
     }
 
-    public CrawlResponse startCrawling(CrawlRequest crawlRequest) {
-        Website website = generateWebsiteProject(crawlRequest);
+    public AuditResponse startCrawling(AuditRequest auditRequest) {
+        Website website = generateWebsiteProject(auditRequest);
         String dataId = UUID.randomUUID().toString();
         CrawlData data = new CrawlData(dataId, website);
-        CrawlTask crawlTask = objectProvider.getObject(data, crawlRequest.getThreadsCount());
-        crawlTask.addListener(this);
-        executorService.execute(crawlTask);
-
+        CrawlTask crawlTask = objectProvider.getObject(data, auditRequest.getThreadsCount());
+  
+        CompletableFuture<CrawlData> completableFuture = crawlTask.asyncCrawl();
+        completableFuture.thenAccept(this::onCrawlCompete);
         String taskId = UUID.randomUUID().toString();
         tasks.put(taskId, crawlTask);
-        return CrawlResponse.builder()
-                .initialUrl(crawlRequest.getStartUrl())
+        return AuditResponse.builder()
+                .initialUri(auditRequest.getStartUri())
                 .domain(website.domain())
                 .taskId(taskId)
                 .websiteProjectId(dataId)
@@ -83,7 +78,7 @@ public class CrawlerService implements CrawlCompleteListener {
                 .build();
     }
 
-    public CrawlStatus getCrawlStatus(String taskId) {
+    public AuditStatus getCrawlStatus(String taskId) {
         CrawlTask crawlTask = tasks.get(taskId);
         if (crawlTask == null) {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
@@ -91,7 +86,7 @@ public class CrawlerService implements CrawlCompleteListener {
         return createCrawlStatus(crawlTask);
     }
 
-    public CrawlStatus stopCrawling(String taskId) {
+    public AuditStatus stopCrawling(String taskId) {
         CrawlTask crawlTask = tasks.get(taskId);
         if (crawlTask == null) {
             throw new TaskNotFoundException(String.format("Task with id %s not found.", taskId));
@@ -100,23 +95,23 @@ public class CrawlerService implements CrawlCompleteListener {
         return createCrawlStatus(crawlTask);
     }
 
-    private CrawlStatus createCrawlStatus(CrawlTask task) {
+    private AuditStatus createCrawlStatus(CrawlTask task) {
         CrawlData crawlData = task.getCrawlData();
         Website website = crawlData.getWebsite();
-        return CrawlStatus.builder()
+        return AuditStatus.builder()
                 .projectName(website.projectName())
                 .domain(website.domain())
-                .crawledPages(crawlData.getCrawledPages().size())
+                .auditedPages(crawlData.getCrawledPages().size())
                 .remainedPages(crawlData.getInternalLinks().size())
                 .brokenPagesCount(crawlData.getBrokenWebPages().size())
                 .status(task.getStatus())
                 .build();
     }
 
-    private Website generateWebsiteProject(CrawlRequest crawlRequest) {
-        String url = crawlRequest.getStartUrl();
+    private Website generateWebsiteProject(AuditRequest auditRequest) {
+        String url = auditRequest.getStartUri();
         String domain = cutDomain(url);
-        String projectName = crawlRequest.getProjectName();
+        String projectName = auditRequest.getProjectName();
         if (projectName == null || projectName.isBlank()) {
             projectName = domain;
         }
@@ -131,15 +126,15 @@ public class CrawlerService implements CrawlCompleteListener {
         return StringUtils.EMPTY;
     }
 
-    @Override
-    public void onCrawlCompete(CrawlCompletedEvent event) {
-        WebsiteProjectDocument websiteProjectDocument = Mapper.mapToWebsiteProject(event.crawlData());
+    
+    public void onCrawlCompete(CrawlData crawlData) {
+        WebsiteProjectDocument websiteProjectDocument = Mapper.mapToWebsiteProject(crawlData);
         websiteProjectRepository.save(websiteProjectDocument);
-        List<WebPageDocument> pageEntities = Mapper.mapToPageEntities(event.crawlData().getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
+        List<WebPageDocument> pageEntities = Mapper.mapToPageEntities(crawlData.getCrawledPages().values().stream().toList(), websiteProjectDocument.getId());
         pageRepository.saveAll(pageEntities);
-        BrokenPagesReportDocument brokenPagesReportDocument = Mapper.mapToBrokenPageReport(event.crawlData().getBrokenWebPages(), websiteProjectDocument.getId());
+        BrokenPagesReportDocument brokenPagesReportDocument = Mapper.mapToBrokenPageReport(crawlData.getBrokenWebPages(), websiteProjectDocument.getId());
         reportDocumentRepository.save(brokenPagesReportDocument);
-        log.info("Report for website {} has been successfully saved.", event.crawlData().getWebsite().domain());
+        log.info("Report for website {} has been successfully saved.", crawlData.getWebsite().domain());
     }
 
     private static class Mapper {
