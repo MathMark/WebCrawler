@@ -62,14 +62,14 @@ public class ReportsService {
         List<BrokenPageEntity> brokenPageEntityList = brokenPagesReportDocument.getBrokenPages();
         return brokenPageEntityList.stream().map(bp -> {
             BrokenPagesReportResponse response = new BrokenPagesReportResponse();
-            response.setUrl(bp.getUrl());
+            response.setUri(bp.getUrl());
             response.setIncomingLinks(bp.getIncomingLinks().stream().map(link -> {
                 IncomingLinkResponse linkResponse = new IncomingLinkResponse();
-                linkResponse.setHrefText(link.getHrefText());
+                //linkResponse.setHrefText(link.getHrefText());
                 linkResponse.setUrl(link.getUrl());
                 return linkResponse;
             }).toList());
-            response.setTextAttribute(bp.getTextAttribute());
+            //response.setTextAttribute(bp.getTextAttribute());
             response.setStatusCode(bp.getStatusCode());
             return response;
         }).collect(Collectors.toList());

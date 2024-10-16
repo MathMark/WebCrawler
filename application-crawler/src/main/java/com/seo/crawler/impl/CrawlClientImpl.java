@@ -68,7 +68,7 @@ public class CrawlClientImpl implements CrawlClient {
     private List<ConnectionResponse.ContentType> parseContentTypes(java.net.http.HttpResponse<String> response) {
         Map<String, List<String>> headers = response.headers().map();
         List<String> contentTypeList = headers.get("content-type");
-        if (contentTypeList.isEmpty()) {
+        if (contentTypeList == null || contentTypeList.isEmpty()) {
             return Collections.singletonList(ConnectionResponse.ContentType.UNSUPPORTED_OR_UNKNOWN);
         }
         List<ConnectionResponse.ContentType> contentTypes = new ArrayList<>();

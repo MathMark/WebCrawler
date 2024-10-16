@@ -12,13 +12,16 @@ import com.seo.model.WebPage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+
+import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
 @Slf4j
 public class CrawlThread implements CompletableRunnable {
-    
+
     private final WebPage startPage;
     private final CrawlData crawlData;
     private final AtomicBoolean isRequestedToStop = new AtomicBoolean();
@@ -31,14 +34,14 @@ public class CrawlThread implements CompletableRunnable {
     public synchronized void stop() {
         isRequestedToStop.set(true);
     }
-    
+
 
     private boolean isStopped() {
         return this.crawlData.getInternalLinks().isEmpty() ||
                 Thread.currentThread().isInterrupted()
                 || isRequestedToStop.get();
     }
-    
+
     private boolean isBroken(HttpStatus httpStatus) {
         return httpStatus == null || httpStatus.is4xxClientError();
     }
@@ -46,25 +49,43 @@ public class CrawlThread implements CompletableRunnable {
     @Override
     public void run() {
         isRequestedToStop.set(false);
-        ConnectionResponse initConnectionResponse = crawlClient.connect(this.startPage.getUrl());
-        parser.parseLinks(this.startPage, initConnectionResponse);
-        while (!isStopped()) {
-            WebPage webPage = crawlData.getInternalLinks().poll();
-            ConnectionResponse connectionResponse = crawlClient.connect(webPage.getUrl());
-            if (isBroken(connectionResponse.getHttpStatus())) {
-                BrokenWebPage brokenWebPage = BrokenWebPage.builder()
-                        .webPage(webPage)
-                        .statusCode(connectionResponse.getHttpStatus().value())
-                        .build();
-                crawlData.getBrokenWebPages().add(brokenWebPage);
-            } else  {
-                parser.parseLinks(webPage, connectionResponse);
-                Content content = contentParser.parseContent(connectionResponse.getHtmlBody());
-                webPage.setContent(content);
-            } 
-        }
+        Optional<ConnectionResponse> initConnectionResponse = connect(this.startPage.getUrl());
+        BlockingQueue<WebPage> queue = crawlData.getInternalLinks();
+        initConnectionResponse.ifPresent(response -> {
+            parser.parseLinks(this.startPage, response);
+            while (!isStopped()) {
+                WebPage nextPage = queue.poll();
+                Optional<ConnectionResponse> connectionResponse = connect(nextPage.getUrl());
+                connectionResponse.ifPresent(nextPageResponse -> {
+                    auditPage(nextPageResponse, nextPage);
+                });
+            }
+        });
+
         latch.countDown();
         log.info("Thread {} exited", Thread.currentThread().getName());
+    }
+
+    private Optional<ConnectionResponse> connect(String uri) {
+        try {
+            return Optional.of(crawlClient.connect(uri));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    private void auditPage(ConnectionResponse connectionResponse, WebPage webPage) {
+        if (isBroken(connectionResponse.getHttpStatus())) {
+            BrokenWebPage brokenWebPage = BrokenWebPage.builder()
+                    .webPage(webPage)
+                    .statusCode(connectionResponse.getHttpStatus().value())
+                    .build();
+            crawlData.getBrokenWebPages().add(brokenWebPage);
+        } else {
+            parser.parseLinks(webPage, connectionResponse);
+            Content content = contentParser.parseContent(connectionResponse.getHtmlBody());
+            webPage.setContent(content);
+        }
     }
 }
 
